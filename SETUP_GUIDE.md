@@ -225,11 +225,11 @@ To use a different Gemini model, edit `GeminiEnhancerService` in `backend_api.py
 
 ```python
 # Available models:
-# - gemini-1.5-pro (most capable)
+# - gemini-2.5-pro (most capable)
 # - gemini-1.5-flash (fast and efficient, default)
 # - gemini-1.0-pro (legacy)
 
-self.model = genai.GenerativeModel("gemini-1.5-pro")
+self.model = genai.GenerativeModel("gemini-2.5-pro")
 ```
 
 ### Format Preservation

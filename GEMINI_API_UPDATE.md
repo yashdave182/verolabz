@@ -10,7 +10,7 @@ Update to a newer version of the library that supports all required features.
 
 1. **requirements.txt**: Updated google-generativeai from 0.3.2 to 0.7.1
 2. **backend_api.py**: 
-   - Updated model name from "gemini-2.5-pro" to "gemini-1.5-pro"
+   - Updated model name from "gemini-2.5-pro" to "gemini-2.5-pro"
    - Updated generation_config to use `genai.types.GenerationConfig`
    - Re-enabled `response_mime_type="text/plain"` parameter
 

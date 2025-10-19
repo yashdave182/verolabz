@@ -200,7 +200,7 @@ class GeminiEnhancerService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-1.5-pro")
+        self.model = genai.GenerativeModel("gemini-2.5-pro")
 
     def enhance_document(
         self, text: str, context: str, preserve_format: bool = True
