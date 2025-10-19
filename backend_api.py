@@ -22,7 +22,9 @@ import google.generativeai as genai
 from module import DocumentProcessor, FormatTemplate, TextFormatExtractor, FormatApplier
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+# Enable CORS for React frontend - configure origins from environment variable
+frontend_url = os.getenv("FRONTEND_URL", "*")
+CORS(app, origins=frontend_url, supports_credentials=True)
 
 # Configuration
 UPLOAD_FOLDER = Path("uploads")
@@ -40,6 +42,12 @@ if GEMINI_API_KEY:
 
 # Unstract API Configuration
 UNSTRACT_API_URL = "https://llmwhisperer-api.us-central.unstract.com/api/v2"
+
+# For PythonAnywhere compatibility, we need to ensure the app can be imported
+# without immediately starting the server
+def create_app():
+    """Factory function to create the Flask app"""
+    return app
 
 # ============================================================================
 # UNSTRACT OCR SERVICE
