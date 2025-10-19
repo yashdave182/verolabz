@@ -10,10 +10,10 @@ const Footer = () => {
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="w-14 h-14 flex items-center justify-center">
-                <img src="/favicon.ico" alt="Verolabz" className="w-10 h-10 object-contain" />
+              <div className="w-16 h-16 flex items-center justify-center">
+                <img src="/favicon.ico" alt="Verolabz" className="w-12 h-12 object-contain" />
               </div>
-              <span className="text-xl font-bold text-foreground">Verolabz</span>
+              <span class="text-2xl font-bold text-foreground">Verolabz</span>
             </Link>
             <p className="text-muted-foreground mb-4 max-w-md">
               AI-powered document enhancement for professionals, students, and freelancers. 

@@ -20,13 +20,13 @@ const Navigation = () => {
   return (
     <nav className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div class="flex justify-between items-center h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 hover-glow">
-            <div className="w-14 h-14 flex items-center justify-center">
-              <img src="/favicon.ico" alt="Verolabz" className="w-10 h-10 object-contain" />
+            <div className="w-16 h-16 flex items-center justify-center">
+              <img src="/favicon.ico" alt="Verolabz" className="w-12 h-12 object-contain" />
             </div>
-            <span className="text-xl font-bold text-foreground">Verolabz</span>
+            <span class="text-2xl font-bold text-foreground">Verolabz</span>
           </Link>
 
           {/* Desktop Navigation */}
