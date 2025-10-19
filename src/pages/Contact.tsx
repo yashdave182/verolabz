@@ -32,7 +32,7 @@ const Contact = () => {
       icon: Mail,
       title: "Email Support",
       description: "Get help with your documents",
-      contact: "support@doctweak.com",
+      contact: "support@doctweak.com, ladkenil80@gmail.com",
       available: "24/7 Response"
     },
     {
