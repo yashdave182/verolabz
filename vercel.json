@@ -1,28 +1,6 @@
 {
-  "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
-    {
-      "source": "/api/health",
-      "destination": "/api/health.py"
-    },
-    {
-      "source": "/api/enhance",
-      "destination": "/api/enhance.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "functions": {
-    "api/health.py": {
-      "runtime": "@vercel/python@4.3.0"
-    },
-    "api/enhance.py": {
-      "runtime": "@vercel/python@4.3.0"
-    }
-  }
+  "devCommand": "npm run dev",
+  "installCommand": "npm install"
 }
