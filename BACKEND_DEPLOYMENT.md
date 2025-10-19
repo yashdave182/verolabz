@@ -1,6 +1,6 @@
 # Backend Deployment Guide
 
-This guide explains how to deploy the DocTweak backend to Railway or Render.
+This guide explains how to deploy the DocTweak backend to Render.
 
 ## Prerequisites
 
@@ -8,20 +8,7 @@ This guide explains how to deploy the DocTweak backend to Railway or Render.
    - Unstract LLMWhisperer API Key
    - Google Gemini API Key
 
-## Deployment Options
-
-### Option 1: Railway Deployment
-
-1. Go to [Railway.app](https://railway.app/) and create an account
-2. Create a new project
-3. Connect your GitHub repository or upload the code
-4. Railway will automatically detect the [Dockerfile](file:///C:/Users/yashd/Downloads/delovable-yashdavece-doc_tweak-1756458605682/doc_tweak-main/Dockerfile) and deploy the application
-5. Add the following environment variables in the Railway dashboard:
-   - `UNSTRACT_API_KEY`: Your Unstract API key
-   - `GEMINI_API_KEY`: Your Google Gemini API key
-   - `PORT`: 5000 (or let Railway auto-assign)
-
-### Option 2: Render Deployment
+## Deployment to Render
 
 1. Go to [Render.com](https://render.com/) and create an account
 2. Create a new Web Service
@@ -31,6 +18,7 @@ This guide explains how to deploy the DocTweak backend to Railway or Render.
 6. Add the following environment variables in the Render dashboard:
    - `UNSTRACT_API_KEY`: Your Unstract API key
    - `GEMINI_API_KEY`: Your Google Gemini API key
+   - `FRONTEND_URL`: https://doctweaker.vercel.app (your frontend URL)
    - `PORT`: 5000 (or let Render auto-assign)
 
 ## Environment Variables
@@ -41,6 +29,7 @@ The following environment variables are required:
 |----------|-------------|----------|
 | `UNSTRACT_API_KEY` | Unstract LLMWhisperer API key | Yes |
 | `GEMINI_API_KEY` | Google Gemini API key | Yes |
+| `FRONTEND_URL` | Frontend URL for CORS configuration | Yes |
 | `PORT` | Port to run the server on | No (defaults to 5000) |
 
 ## API Endpoints
@@ -58,7 +47,10 @@ Once deployed, your backend will be available at your deployment URL with the fo
 After deploying the backend, update your frontend [.env](file:///C:/Users/yashd/Downloads/delovable-yashdavece-doc_tweak-1756458605682/doc_tweak-main/.env) file to point to your new backend URL:
 
 ```
-VITE_API_URL=https://your-backend-url.railway.app
+VITE_API_URL=https://doctweaker.onrender.com
+FRONTEND_URL=https://doctweaker.vercel.app
 ```
 
-Replace `your-backend-url.railway.app` with your actual deployment URL.
+## CORS Configuration
+
+The backend is configured to accept requests from the frontend URL specified in the `FRONTEND_URL` environment variable. Make sure this matches your actual frontend deployment URL.

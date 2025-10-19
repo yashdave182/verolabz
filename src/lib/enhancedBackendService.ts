@@ -47,7 +47,7 @@ export interface HealthResponse {
  */
 export const checkBackendHealth = async (): Promise<HealthResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
+    const response = await fetch(`${API_BASE_URL}/api/health`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export const uploadDocument = async (
     formData.append("mode", mode);
     formData.append("output_mode", outputMode);
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload`, {
       method: "POST",
       body: formData,
     });
@@ -110,7 +110,7 @@ export const enhanceDocument = async (
   preserveFormat: boolean = true,
 ): Promise<EnhanceResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/enhance`, {
+    const response = await fetch(`${API_BASE_URL}/api/enhance`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -153,7 +153,7 @@ export const processDocument = async (
     formData.append("mode", mode);
     formData.append("preserve_format", preserveFormat.toString());
 
-    const response = await fetch(`${API_BASE_URL}/process`, {
+    const response = await fetch(`${API_BASE_URL}/api/process`, {
       method: "POST",
       body: formData,
     });
@@ -178,7 +178,7 @@ export const processDocument = async (
  */
 export const downloadDocument = async (documentId: string): Promise<Blob> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/download/${documentId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/download/${documentId}`, {
       method: "GET",
     });
 

@@ -1,33 +1,56 @@
-// Test script to verify frontend-backend communication
+/**
+ * Test script to verify backend connection and API endpoints
+ * Run this script to check if the backend is properly configured
+ */
+
 async function testBackendConnection() {
-  console.log("Testing frontend-backend communication...");
+  const BACKEND_URL = "https://doctweaker.onrender.com";
+  
+  console.log("Testing backend connection...");
+  console.log(`Backend URL: ${BACKEND_URL}`);
   
   try {
-    // Test health endpoint
-    const healthResponse = await fetch("https://doctweaker.onrender.com/api/health");
-    const healthData = await healthResponse.json();
+    // Test 1: Health check
+    console.log("\n1. Testing health check endpoint...");
+    const healthResponse = await fetch(`${BACKEND_URL}/api/health`);
+    console.log(`   Status: ${healthResponse.status} ${healthResponse.statusText}`);
     
-    console.log("✅ Health check successful:");
-    console.log(`   Status: ${healthData.status}`);
-    console.log(`   Unstract API: ${healthData.unstract_configured ? '✓ Configured' : '✗ Missing'}`);
-    console.log(`   Gemini API: ${healthData.gemini_configured ? '✓ Configured' : '✗ Missing'}`);
+    if (healthResponse.ok) {
+      const healthData = await healthResponse.json();
+      console.log(`   Response:`, healthData);
+      console.log("   ✅ Health check passed");
+    } else {
+      console.log("   ❌ Health check failed");
+      return;
+    }
     
-    // Test upload endpoint (should return 400 for no file provided)
-    const uploadResponse = await fetch("https://doctweaker.onrender.com/api/upload", {
-      method: "POST"
+    // Test 2: CORS preflight for enhance endpoint
+    console.log("\n2. Testing CORS preflight for enhance endpoint...");
+    const corsResponse = await fetch(`${BACKEND_URL}/api/enhance`, {
+      method: 'OPTIONS'
     });
-    const uploadData = await uploadResponse.json();
+    console.log(`   Status: ${corsResponse.status} ${corsResponse.statusText}`);
     
-    console.log("✅ Upload endpoint accessible:");
-    console.log(`   Status: ${uploadResponse.status}`);
-    console.log(`   Response: ${uploadData.error || 'No file provided (expected)'}`);
+    const allowOrigin = corsResponse.headers.get('Access-Control-Allow-Origin');
+    const allowMethods = corsResponse.headers.get('Access-Control-Allow-Methods');
+    const allowHeaders = corsResponse.headers.get('Access-Control-Allow-Headers');
     
-    console.log("\n🎉 All backend API endpoints are working correctly!");
-    console.log("The 404 error for root path is expected - backend only serves API endpoints.");
+    console.log(`   Access-Control-Allow-Origin: ${allowOrigin}`);
+    console.log(`   Access-Control-Allow-Methods: ${allowMethods}`);
+    console.log(`   Access-Control-Allow-Headers: ${allowHeaders}`);
+    
+    if (corsResponse.ok) {
+      console.log("   ✅ CORS preflight passed");
+    } else {
+      console.log("   ❌ CORS preflight failed");
+    }
+    
+    console.log("\n🎉 Backend connection test completed!");
     
   } catch (error) {
     console.error("❌ Error testing backend connection:", error);
   }
 }
 
+// Run the test
 testBackendConnection();

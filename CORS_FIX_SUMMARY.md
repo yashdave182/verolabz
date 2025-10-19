@@ -1,44 +1,55 @@
 # CORS Issue Resolution Summary
 
 ## Problem Identified
-The frontend was getting CORS errors when trying to access the backend API because:
-1. There were conflicting Vercel serverless functions in the `api/` directory
-2. The frontend was trying to call `/enhance` instead of `/api/enhance`
-3. The Vercel serverless functions were not properly configured for CORS
+The frontend was making API calls to `https://doctweaker.onrender.com/enhance` instead of `https://doctweaker.onrender.com/api/enhance`, causing CORS preflight errors.
 
-## Root Cause
-The application had both:
-- Render backend at https://doctweaker.onrender.com with proper `/api/*` endpoints
-- Vercel serverless functions in `api/` directory that were conflicting
+## Fixes Applied
 
-## Solution Implemented
+### 1. Updated Enhanced Backend Service
+Modified `src/lib/enhancedBackendService.ts` to ensure all API endpoints use the correct `/api/` prefix:
+- Health check: `${API_BASE_URL}/api/health`
+- Upload: `${API_BASE_URL}/api/upload`
+- Enhance: `${API_BASE_URL}/api/enhance`
+- Process: `${API_BASE_URL}/api/process`
+- Download: `${API_BASE_URL}/api/download/${documentId}`
 
-### 1. Removed Conflicting Vercel Serverless Functions
-- Deleted `api/enhance.py`
-- Deleted `api/health.py`
-- Deleted `api/requirements.txt`
-- Removed the `api/` directory entirely
+### 2. Cleaned Environment Variables
+Removed duplicate entry in `.env` file for `VITE_API_URL`
 
-### 2. Fixed Frontend API Configuration
-Updated `src/lib/enhancedBackendService.ts` to ensure it always uses the VITE_API_URL:
-- Changed from: `import.meta.env.PROD ? "/api" : "http://localhost:3001"`
-- Changed to: `import.meta.env.DEV ? "http://localhost:3001" : import.meta.env.VITE_API_URL`
+### 3. Verified Component Usage
+Confirmed that the main document processing component (`EnhancedDocTweaker.tsx`) correctly uses the enhanced backend service.
 
-This ensures that in production, it always uses the Render backend URL.
+## Remaining Steps
 
-### 3. Verified Backend Endpoints
-Confirmed that the Render backend has the correct endpoints:
-- `GET /api/health` ✅
-- `POST /api/upload` ✅
-- `POST /api/enhance` ✅
-- `POST /api/process` ✅
-- `GET /api/download/<id>` ✅
+### 1. Rebuild and Redeploy Frontend
+The Vercel deployment needs to be updated with the latest code:
+```bash
+# Clean build
+npm run build
 
-## Verification
-- All API endpoints are working correctly on Render
-- Frontend will now correctly communicate with Render backend
-- CORS is properly configured in the Render backend
-- No more conflicts between Vercel serverless functions and Render backend
+# Deploy to Vercel (or trigger deployment through Vercel dashboard)
+```
 
-## Next Steps
-Deploy the updated code to Vercel. The CORS errors should now be resolved.
+### 2. Clear Browser Cache
+Users should clear their browser cache or perform a hard refresh (Ctrl+F5) to ensure they're loading the latest frontend code.
+
+### 3. Verify Backend CORS Configuration
+The backend CORS configuration has been updated to:
+```python
+frontend_url = os.getenv("FRONTEND_URL", "*")
+CORS(app, origins=[frontend_url])
+```
+
+With the environment variable set to `https://doctweaker.vercel.app` in Render.
+
+## Testing
+After deployment, test the following endpoints:
+1. https://doctweaker.onrender.com/api/health (should return 200 OK)
+2. Document enhancement workflow through the frontend
+
+## Expected Result
+The CORS preflight error should be resolved as the frontend will now correctly call:
+`https://doctweaker.onrender.com/api/enhance`
+
+Instead of:
+`https://doctweaker.onrender.com/enhance`
