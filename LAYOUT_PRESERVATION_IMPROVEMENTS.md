@@ -18,7 +18,7 @@ This document summarizes all the improvements made to enhance document layout pr
 
 ### 3. Dependency Updates
 - **Google Generative AI Library**: Updated from 0.3.2 to 0.7.1 for better compatibility
-- **Model Name**: Changed from "gemini-2.5-pro" to "gemini-2.5-pro" for stability
+- **Model Name**: Changed from "gemini-2.5-flash" to "gemini-2.5-flash" for stability
 - **Generation Config**: Updated to use proper `genai.types.GenerationConfig`
 
 ## Frontend Improvements

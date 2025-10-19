@@ -1,10 +1,10 @@
 # Improving Gemini Response Quality
 
 ## Current Issues
-Even with gemini-2.5-pro (or gemini-1.5-pro), the responses might not be as good as expected. Here are several factors that could be affecting quality:
+Even with gemini-2.5-flash (or gemini-1.5-pro), the responses might not be as good as expected. Here are several factors that could be affecting quality:
 
 ## 1. Model Name Issues
-The model name "gemini-2.5-pro" might not be valid. Using "gemini-1.5-pro-latest" is more reliable.
+The model name "gemini-2.5-flash" might not be valid. Using "gemini-1.5-pro-latest" is more reliable.
 
 ## 2. Prompt Engineering Improvements
 The current prompt can be enhanced in several ways:

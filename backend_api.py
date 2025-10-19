@@ -201,7 +201,7 @@ class GeminiEnhancerService:
         self.api_key = api_key
         genai.configure(api_key=api_key)
         # Use the Gemini 2.5 Pro model as it's the most advanced
-        self.model = genai.GenerativeModel("gemini-2.5-pro")
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
 
     def enhance_document(
         self, text: str, context: str, preserve_format: bool = True

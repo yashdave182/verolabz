@@ -2,7 +2,7 @@
 
 ## Issues Identified
 
-1. **Model Name**: "gemini-2.5-pro" may not be a valid model name
+1. **Model Name**: "gemini-2.5-flash" may not be a valid model name
 2. **Prompt Structure**: Could be more effective with clearer organization
 3. **Generation Parameters**: Fixed parameters may not be optimal for all use cases
 4. **User Guidance**: Users may not know how to write effective enhancement requests
@@ -10,7 +10,7 @@
 ## Solutions Implemented
 
 ### 1. Model Update
-Changed from "gemini-2.5-pro" to "gemini-1.5-pro-latest" which is a known stable model.
+Changed from "gemini-2.5-flash" to "gemini-1.5-pro-latest" which is a known stable model.
 
 ### 2. Improved Prompt Engineering
 Restructured the prompt with clear sections:

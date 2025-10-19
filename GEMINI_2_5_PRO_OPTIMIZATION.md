@@ -11,7 +11,7 @@ Gemini 2.5 Pro is Google's most advanced thinking model with capabilities includ
 ## Key Improvements Made
 
 ### 1. Model Selection
-- **Updated to**: `gemini-2.5-pro` (the most advanced model)
+- **Updated to**: `gemini-2.5-flash` (the most advanced model)
 - **Previous**: `gemini-1.5-pro-latest` (second generation model)
 
 ### 2. Enhanced Prompt Engineering for 2.5 Pro
