@@ -1,0 +1,182 @@
+================================================================================
+        DOCUMENT TWEAKER - SIMPLE INSTALLATION INSTRUCTIONS
+================================================================================
+
+Follow these steps IN ORDER:
+
+================================================================================
+STEP 1: GET API KEYS (5 minutes)
+================================================================================
+
+A) Unstract API Key (FREE):
+   1. Go to: https://unstract.com/
+   2. Click "Sign Up"
+   3. After login, go to Dashboard → API Keys
+   4. Click "Create New API Key"
+   5. COPY the key and save it somewhere safe
+
+B) Gemini API Key (FREE):
+   1. Go to: https://makersuite.google.com/app/apikey
+   2. Sign in with Google
+   3. Click "Create API Key"
+   4. COPY the key and save it somewhere safe
+
+================================================================================
+STEP 2: CONFIGURE API KEYS (2 minutes)
+================================================================================
+
+1. In the project folder, run this command:
+
+   copy .env.example .env
+
+2. Open the .env file:
+
+   notepad .env
+
+3. You'll see:
+   UNSTRACT_API_KEY=your_unstract_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
+
+4. Replace "your_unstract_api_key_here" with your actual Unstract key
+   Replace "your_gemini_api_key_here" with your actual Gemini key
+
+   IMPORTANT:
+   - NO quotes around the keys
+   - NO spaces before or after the = sign
+
+   Example:
+   UNSTRACT_API_KEY=sk-abc123xyz456
+   GEMINI_API_KEY=AIzaSy789def012
+
+5. Save and close the file (Ctrl+S, then close)
+
+================================================================================
+STEP 3: INSTALL PACKAGES (5 minutes)
+================================================================================
+
+Double-click this file:
+
+   install.bat
+
+Wait until you see "Installation Complete!"
+
+This installs:
+- Python packages (Flask, Gemini SDK, etc.)
+- Node.js packages (React, Vite, etc.)
+
+================================================================================
+STEP 4: START THE APPLICATION
+================================================================================
+
+A) Start Backend (Terminal 1):
+
+   Double-click: run_backend.bat
+
+   Wait for: "Running on http://0.0.0.0:5000"
+   KEEP THIS WINDOW OPEN!
+
+B) Start Frontend (Terminal 2):
+
+   Double-click: run_frontend.bat
+
+   Wait for: "Local: http://localhost:5173/"
+   KEEP THIS WINDOW OPEN!
+
+C) Open in Browser:
+
+   Go to: http://localhost:5173/enhanced-doc-tweaker
+
+================================================================================
+STEP 5: USE THE APPLICATION
+================================================================================
+
+1. Click "Choose File" and select a PDF, Word, or TXT file
+   (OR paste text directly into the text area)
+
+2. In "Enhancement Instructions" box, type what you want:
+   Example: "Make this more professional for a business proposal"
+
+3. Click "Enhance with AI"
+
+4. Wait 20-40 seconds (progress bar shows status)
+
+5. Review results and click "Download" or "Copy"
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "No module named 'flask'"
+Solution: Run install.bat again
+
+Problem: "Backend server is not running"
+Solution: Make sure run_backend.bat is running in another window
+
+Problem: "API key not configured"
+Solution: Check .env file has your actual API keys (no placeholders)
+
+Problem: "Python not found"
+Solution: Install Python 3.9+ from https://www.python.org/downloads/
+         During install, CHECK "Add Python to PATH"
+
+Problem: "Node not found"
+Solution: Install Node.js 18+ from https://nodejs.org/
+
+Need more help? Run: python diagnose.py
+
+================================================================================
+QUICK REFERENCE
+================================================================================
+
+Install (first time only):
+   install.bat
+
+Configure (first time only):
+   1. copy .env.example .env
+   2. notepad .env
+   3. Add your API keys
+   4. Save
+
+Start application (every time):
+   1. run_backend.bat (keep open)
+   2. run_frontend.bat (keep open)
+   3. Open: http://localhost:5173/enhanced-doc-tweaker
+
+Stop application:
+   Press Ctrl+C in both terminal windows
+
+Check if everything works:
+   python diagnose.py
+
+================================================================================
+FILES YOU NEED TO KNOW
+================================================================================
+
+install.bat           - Install all packages (run once)
+run_backend.bat       - Start Flask server (run every time)
+run_frontend.bat      - Start React app (run every time)
+.env                  - Your API keys (create from .env.example)
+diagnose.py           - Check if setup is correct
+
+INSTALL_INSTRUCTIONS.txt  - This file
+START_HERE.md            - Detailed guide
+ACTION_PLAN.md           - What to do now
+CHECKLIST.md             - Verify installation
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total time: About 12 minutes
+
+1. Get 2 API keys (5 min)
+2. Configure .env file (2 min)
+3. Run install.bat (5 min)
+4. Run run_backend.bat (keep open)
+5. Run run_frontend.bat (keep open)
+6. Open browser to http://localhost:5173/enhanced-doc-tweaker
+7. Upload, enhance, download!
+
+That's it! You're ready to enhance documents with AI!
+
+================================================================================
