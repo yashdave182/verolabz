@@ -520,21 +520,19 @@ const EnhancedDocTweaker = () => {
                   </Label>
                   <Textarea
                     id="context"
-                    placeholder="Examples of effective requests for our advanced AI (Gemini 2.5 Pro):
+                    placeholder="Be specific about what you want to achieve. Examples:
+- 'Add a conclusion at the end'
+- 'Make this sound more professional'
 - 'Fix grammar and spelling errors'
-- 'Make this sound more professional for a business proposal'
-- 'Improve clarity for technical documentation'
-- 'Make this more engaging for a general audience'
-- 'Shorten this document while keeping key points'
-- 'Analyze this technical document and improve explanations'
-- 'Review this code documentation for clarity and completeness'"
-                    className="min-h-[150px] mt-2"
+- 'Reorganize the content for better flow'
+- 'Add a summary paragraph at the beginning'"
+                    className="min-h-[120px] mt-2"
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                     disabled={isProcessing}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Leverage our advanced Gemini 2.5 Pro AI. Be specific about what you want to achieve.
+                    Your specific request will be the primary focus of the AI enhancement.
                   </p>
                 </div>
 

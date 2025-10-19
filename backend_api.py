@@ -226,6 +226,9 @@ class GeminiEnhancerService:
                 system_prompt = """[ROLE]
 You are an expert document enhancer specializing in improving content while preserving exact formatting and layout. You are using Gemini 2.5 Pro, our most advanced thinking model.
 
+[PRIMARY INSTRUCTION]
+The user has provided a specific request. This MUST be the primary focus of your enhancement. All other improvements should support this main request.
+
 [FORMAT PRESERVATION RULES]
 1. NEVER modify formatting markers: **bold**, *italic*, <<<PAGE_BREAK>>>, [1], [2], etc.
 2. NEVER change document structure: headings, paragraphs, lists, tables
@@ -261,16 +264,20 @@ DO NOT change any of these markers or the document structure."""
 You are an expert document enhancer using Gemini 2.5 Pro. Improve the document's content based on the user's instructions while maintaining a professional and clear style."""
 
             # Create a more structured prompt with clear sections
+            # Make the user context more prominent and actionable
             user_prompt = f"""{system_prompt}
 
-[USER REQUEST]
+[USER'S SPECIFIC REQUEST]
 {context}
 
-[DOCUMENT]
+[DOCUMENT TO ENHANCE]
 {text}
 
-[OUTPUT]
-Return ONLY the enhanced document with exact formatting preserved. Do not include any additional commentary, explanations, or markdown formatting."""
+[CRITICAL INSTRUCTIONS]
+1. The USER'S SPECIFIC REQUEST above is the PRIMARY focus - make this happen
+2. Preserve ALL formatting exactly as shown
+3. Return ONLY the enhanced document
+4. Do not include any additional commentary or explanations"""
 
             # Adjust generation parameters to take advantage of Gemini 2.5 Pro capabilities
             # Default parameters optimized for Gemini 2.5 Pro
