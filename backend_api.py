@@ -24,7 +24,7 @@ from module import DocumentProcessor, FormatTemplate, TextFormatExtractor, Forma
 app = Flask(__name__)
 # Enable CORS for React frontend - configure origins from environment variable
 frontend_url = os.getenv("FRONTEND_URL", "*")
-CORS(app, origins=frontend_url, supports_credentials=True)
+CORS(app, origins=[frontend_url])
 
 # Configuration
 UPLOAD_FOLDER = Path("uploads")
