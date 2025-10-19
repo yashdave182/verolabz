@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Twitter, Linkedin, Github, Mail } from "lucide-react";
+import { Zap, Twitter, Linkedin, Github, Mail, Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -20,17 +20,30 @@ const Footer = () => {
               Transform your documents with smart, context-aware refinements.
             </p>
             <div className="flex space-x-3">
-              <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
-                <Twitter className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="w-9 h-9 p-0" asChild>
+                <a href="https://x.com/kenil_lad?t=PApY929t9N6PyuAPiaiSjw&s=08" target="_blank" rel="noopener noreferrer">
+                  <Twitter className="w-4 h-4" />
+                </a>
               </Button>
-              <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
-                <Linkedin className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="w-9 h-9 p-0" asChild>
+                <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
+                  <Linkedin className="w-4 h-4" />
+                </a>
               </Button>
-              <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
-                <Github className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="w-9 h-9 p-0" asChild>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                  <Github className="w-4 h-4" />
+                </a>
               </Button>
-              <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
-                <Mail className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="w-9 h-9 p-0" asChild>
+                <a href="https://www.instagram.com/verolabz?igsh=ejBkNHp4bXRvamFm" target="_blank" rel="noopener noreferrer">
+                  <Instagram className="w-4 h-4" />
+                </a>
+              </Button>
+              <Button variant="ghost" size="sm" className="w-9 h-9 p-0" asChild>
+                <a href="mailto:support@doctweak.com">
+                  <Mail className="w-4 h-4" />
+                </a>
               </Button>
             </div>
           </div>

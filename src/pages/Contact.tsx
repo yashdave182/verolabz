@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageSquare, Phone, MapPin, Send, Clock } from "lucide-react";
+import { Mail, MessageSquare, Phone, Send, Clock, Instagram, Twitter } from "lucide-react";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -46,8 +46,22 @@ const Contact = () => {
       icon: Phone,
       title: "Phone Support",
       description: "Speak with our team directly",
-      contact: "+1 (555) 123-4567",
+      contact: "+91 9510516724",
       available: "Mon-Fri 9AM-5PM"
+    },
+    {
+      icon: Instagram,
+      title: "Instagram",
+      description: "Follow us for updates and tips",
+      contact: "@verolabz",
+      available: "24/7"
+    },
+    {
+      icon: Twitter,
+      title: "X (Twitter)",
+      description: "Follow us for updates and tips",
+      contact: "@kenil_lad",
+      available: "24/7"
     }
   ];
 
@@ -206,27 +220,6 @@ const Contact = () => {
                   <p className="text-muted-foreground">
                     Most documents are enhanced within 2-5 seconds.
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Office Location */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 gradient-hero rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">
-                      Our Office
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      123 Innovation Drive<br />
-                      Tech Hub, CA 94105<br />
-                      United States
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
