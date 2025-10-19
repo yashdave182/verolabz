@@ -168,6 +168,26 @@ Solution:
      git commit -m "Add package lock"
      git push
 
+Problem: "The 'functions' property cannot be used with 'builds'"
+Solution:
+  1. This means vercel.json has conflicting properties
+  2. Make sure your vercel.json looks like this:
+     {
+       "version": 2,
+       "buildCommand": "npm run build",
+       "outputDirectory": "dist",
+       "framework": "vite",
+       "functions": {
+         "api/*.py": {
+           "runtime": "python3.9",
+           "memory": 1024,
+           "maxDuration": 60
+         }
+       }
+     }
+  3. Remove any "builds" property if present
+  4. Commit and push the fixed vercel.json
+
 Problem: API endpoints return 404
 Solution:
   1. Verify api/ folder is in your GitHub repo
