@@ -200,7 +200,8 @@ class GeminiEnhancerService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-2.5-pro")
+        # Use the correct model name - gemini-1.5-pro-latest is the stable version
+        self.model = genai.GenerativeModel("gemini-1.5-pro-latest")
 
     def enhance_document(
         self, text: str, context: str, preserve_format: bool = True
@@ -220,58 +221,75 @@ class GeminiEnhancerService:
             print(f"[Gemini] Starting enhancement. Text length: {len(text)}")
             print(f"[Gemini] Context: {context}")
 
-            # Build prompt with comprehensive layout preservation instructions
+            # Build prompt with improved structure and clarity
             if preserve_format:
-                system_prompt = """You are an expert document enhancer. Your task is to improve the document while STRICTLY PRESERVING all formatting markers and layout structure. This is CRITICAL for the user's workflow.
+                system_prompt = """[ROLE]
+You are an expert document enhancer specializing in improving content while preserving exact formatting and layout.
 
-CRITICAL RULES FOR FORMAT PRESERVATION:
-1. Keep ALL formatting markers exactly as they are (bold markers **text**, line breaks, spacing, indentation)
-2. Maintain the same document structure (headings, paragraphs, lists, tables)
-3. Preserve line numbers if present
-4. Keep page breaks (<<<PAGE_BREAK>>>) in the same positions
-5. Maintain vertical and horizontal line markers (|, -, +, etc.)
-6. Preserve indentation and spacing patterns
-7. Keep all special characters and symbols in their original positions
-8. Do not add or remove any lines or paragraphs
-9. Do not change the order of content blocks
+[FORMAT PRESERVATION RULES]
+1. NEVER modify formatting markers: **bold**, *italic*, <<<PAGE_BREAK>>>, [1], [2], etc.
+2. NEVER change document structure: headings, paragraphs, lists, tables
+3. NEVER reorganize content order
+4. NEVER add or remove lines
+5. Keep all special characters and symbols in their original positions
+6. Maintain exact indentation and spacing patterns
 
-Your enhancements should focus on:
-- Improving clarity and readability of the text content
-- Fixing grammar and spelling errors
-- Enhancing word choice and tone
-- Making the content more professional and impactful
-- Following the user's specific instructions
+[ENHANCEMENT FOCUS]
+- Fix grammar and spelling errors
+- Improve word choice and clarity
+- Adjust tone based on user request
+- Make content more professional or engaging as requested
+- Follow the user's specific instructions precisely
 
-IMPORTANT: The document may contain special layout markers such as:
+[IMPORTANT]
+The document may contain special layout markers such as:
 - Page breaks: <<<PAGE_BREAK>>>
 - Line numbers: [1], [2], [3], etc.
 - Table structures with | and - characters
 - Indentation with spaces or tabs
 - Special formatting markers
 
-DO NOT change the structure, formatting markers, or layout. Only improve the actual text content within these constraints."""
+DO NOT change any of these markers or the document structure."""
             else:
-                system_prompt = """You are an expert document enhancer. Improve the document's content based on the user's instructions while maintaining a professional and clear style."""
+                system_prompt = """[ROLE]
+You are an expert document enhancer. Improve the document's content based on the user's instructions while maintaining a professional and clear style."""
 
             # Create a more structured prompt with clear sections
             user_prompt = f"""{system_prompt}
 
-USER'S ENHANCEMENT REQUEST:
+[USER REQUEST]
 {context}
 
-ORIGINAL DOCUMENT WITH LAYOUT MARKERS:
+[DOCUMENT]
 {text}
 
-Please provide the enhanced version that follows ALL the format preservation rules above. Return ONLY the enhanced document without any additional commentary, explanations, or markdown formatting."""
+[OUTPUT]
+Return ONLY the enhanced document with exact formatting preserved. Do not include any additional commentary, explanations, or markdown formatting."""
+
+            # Adjust generation parameters based on context for better quality
+            # Default parameters
+            temperature = 0.3
+            top_p = 0.9
+            top_k = 40
+            max_output_tokens = 8192
+            
+            # Adjust parameters based on context keywords
+            context_lower = context.lower()
+            if any(word in context_lower for word in ["creative", "imaginative", "story", "narrative"]):
+                temperature = 0.7  # More creative
+            elif any(word in context_lower for word in ["formal", "professional", "business"]):
+                temperature = 0.2  # More precise
+            elif any(word in context_lower for word in ["grammar", "spelling", "fix"]):
+                temperature = 0.1  # Most consistent
 
             # Use proper system instruction and generation configuration
             response = self.model.generate_content(
                 user_prompt,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.3,  # Low temperature for consistency
-                    top_p=0.9,
-                    top_k=40,
-                    max_output_tokens=8192,
+                    temperature=temperature,
+                    top_p=top_p,
+                    top_k=top_k,
+                    max_output_tokens=max_output_tokens,
                     response_mime_type="text/plain"
                 ),
             )
@@ -282,6 +300,7 @@ Please provide the enhanced version that follows ALL the format preservation rul
             enhanced_text = response.text.strip()
 
             print(f"[Gemini] Enhancement complete. Output length: {len(enhanced_text)}")
+            print(f"[Gemini] Used parameters: temp={temperature}, top_p={top_p}, top_k={top_k}")
 
             return {"success": True, "text": enhanced_text}
 

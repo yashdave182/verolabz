@@ -520,8 +520,13 @@ const EnhancedDocTweaker = () => {
                   </Label>
                   <Textarea
                     id="context"
-                    placeholder="e.g., 'Make this more professional for a business proposal' or 'Improve clarity and fix grammar for an academic paper'"
-                    className="min-h-[100px] mt-2"
+                    placeholder="Examples of effective requests:
+- 'Fix grammar and spelling errors'
+- 'Make this sound more professional for a business proposal'
+- 'Improve clarity for technical documentation'
+- 'Make this more engaging for a general audience'
+- 'Shorten this document while keeping key points'"
+                    className="min-h-[120px] mt-2"
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
                     disabled={isProcessing}
