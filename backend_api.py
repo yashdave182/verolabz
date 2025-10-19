@@ -200,7 +200,7 @@ class GeminiEnhancerService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-2.5-pro")
+        self.model = genai.GenerativeModel("gemini-1.5-pro")
 
     def enhance_document(
         self, text: str, context: str, preserve_format: bool = True
@@ -267,13 +267,13 @@ Please provide the enhanced version that follows ALL the format preservation rul
             # Use proper system instruction and generation configuration
             response = self.model.generate_content(
                 user_prompt,
-                generation_config={
-                    "temperature": 0.3,  # Low temperature for consistency
-                    "top_p": 0.9,
-                    "top_k": 40,
-                    "max_output_tokens": 8192,
-                    "response_mime_type": "text/plain"
-                },
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.3,  # Low temperature for consistency
+                    top_p=0.9,
+                    top_k=40,
+                    max_output_tokens=8192,
+                    response_mime_type="text/plain"
+                ),
             )
 
             if not response or not response.text:
