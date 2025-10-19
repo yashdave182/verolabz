@@ -21,10 +21,20 @@ import google.generativeai as genai
 # Import format processor
 from module import DocumentProcessor, FormatTemplate, TextFormatExtractor, FormatApplier
 
+# Import docx for Word document generation
+from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 app = Flask(__name__)
 # Enable CORS for React frontend - configure origins from environment variable
 frontend_url = os.getenv("FRONTEND_URL", "*")
-CORS(app, origins=[frontend_url])
+# For development, also allow localhost:8080
+origins = [frontend_url]
+if frontend_url != "*" and frontend_url != "http://localhost:8080":
+    origins.append("http://localhost:8080")
+
+CORS(app, origins=origins)
 
 # Configuration
 UPLOAD_FOLDER = Path("uploads")
@@ -549,27 +559,84 @@ def download_document(document_id):
         if not result_path.exists():
             return jsonify({"success": False, "error": "Document not found"}), 404
 
+        # Check if user wants DOCX format
+        format_type = request.args.get('format', 'txt')  # Default to txt for backward compatibility
+
         # Load format template
         template = FormatTemplate.load(str(result_path))
 
-        # Convert to plain text
-        text_output = []
-        for block in template.blocks:
-            text_output.append(block.text)
+        if format_type.lower() == 'docx':
+            # Generate DOCX file
+            doc = Document()
+            
+            # Add content to document based on format template
+            for block in template.blocks:
+                # Determine block type and add appropriate content
+                if block.block_format.type.name == 'HEADING' and block.block_format.heading_level:
+                    # Add heading
+                    heading_level = min(block.block_format.heading_level, 6)  # python-docx supports heading 1-6
+                    heading = doc.add_heading(block.text, level=heading_level)
+                    
+                    # Apply character formatting if available
+                    if block.char_formats:
+                        for char_format in block.char_formats:
+                            # Basic formatting support
+                            if char_format.bold:
+                                heading.runs[0].bold = True
+                            if char_format.italic:
+                                heading.runs[0].italic = True
+                else:
+                    # Add paragraph
+                    paragraph = doc.add_paragraph(block.text)
+                    
+                    # Apply paragraph formatting
+                    if block.block_format.alignment == 'center':
+                        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    elif block.block_format.alignment == 'right':
+                        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    elif block.block_format.alignment == 'justify':
+                        paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                    
+                    # Apply character formatting if available
+                    if block.char_formats:
+                        for char_format in block.char_formats:
+                            # Basic character formatting support
+                            if char_format.bold:
+                                paragraph.runs[0].bold = True
+                            if char_format.italic:
+                                paragraph.runs[0].italic = True
 
-        full_text = "\n\n".join(text_output)
+            # Save to BytesIO buffer
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
 
-        # Create file buffer
-        buffer = BytesIO()
-        buffer.write(full_text.encode("utf-8"))
-        buffer.seek(0)
+            return send_file(
+                buffer,
+                mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                as_attachment=True,
+                download_name=f"enhanced_document_{document_id}.docx",
+            )
+        else:
+            # Original TXT format
+            # Convert to plain text
+            text_output = []
+            for block in template.blocks:
+                text_output.append(block.text)
 
-        return send_file(
-            buffer,
-            mimetype="text/plain",
-            as_attachment=True,
-            download_name=f"enhanced_document_{document_id}.txt",
-        )
+            full_text = "\n\n".join(text_output)
+
+            # Create file buffer
+            buffer = BytesIO()
+            buffer.write(full_text.encode("utf-8"))
+            buffer.seek(0)
+
+            return send_file(
+                buffer,
+                mimetype="text/plain",
+                as_attachment=True,
+                download_name=f"enhanced_document_{document_id}.txt",
+            )
 
     except Exception as e:
         print(f"[Download] Exception: {str(e)}")

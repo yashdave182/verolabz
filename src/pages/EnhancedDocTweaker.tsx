@@ -26,7 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   processDocument,
   validateBackendConfiguration,
-  detectDocumentMode
+  detectDocumentMode,
+  downloadDocument
 } from "@/lib/enhancedBackendService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -225,9 +226,47 @@ const EnhancedDocTweaker = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!enhancedText) return;
+  const handleDownload = (format: 'txt' | 'docx' = 'txt') => {
+    if (!enhancedText || !documentId) return;
 
+    // For DOCX format, we need to use the backend service
+    if (format === 'docx' && documentId) {
+      // Use the backend service to generate and download DOCX
+      downloadDocument(documentId, 'docx')
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = window.document.createElement('a');
+          a.href = url;
+          a.download = `enhanced_${uploadedFileName || 'document'}.docx`;
+          window.document.body.appendChild(a);
+          a.click();
+          window.document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          toast({
+            title: "Downloaded",
+            description: "Enhanced document has been downloaded as Word document.",
+          });
+        })
+        .catch(error => {
+          console.error('Download error:', error);
+          toast({
+            title: "Download Failed",
+            description: "Failed to download as Word document. Downloading as text instead.",
+            variant: "destructive",
+          });
+          // Fallback to text download
+          handleDownloadTxt();
+        });
+    } else {
+      // Original TXT format
+      handleDownloadTxt();
+    }
+  };
+
+  const handleDownloadTxt = () => {
+    if (!enhancedText) return;
+    
     const blob = new Blob([enhancedText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = window.document.createElement('a');
@@ -240,8 +279,16 @@ const EnhancedDocTweaker = () => {
 
     toast({
       title: "Downloaded",
-      description: "Enhanced document has been downloaded.",
+      description: "Enhanced document has been downloaded as text file.",
     });
+  };
+
+  const handleDownloadTxtClick = () => {
+    handleDownload('txt');
+  };
+
+  const handleDownloadDocxClick = () => {
+    handleDownload('docx');
   };
 
   const handleCopy = () => {
@@ -524,15 +571,26 @@ const EnhancedDocTweaker = () => {
                         <Copy className="w-4 h-4 mr-2" />
                         Copy
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDownload}
-                        disabled={!enhancedText}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDownloadTxtClick}
+                          disabled={!enhancedText}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download TXT
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDownloadDocxClick}
+                          disabled={!enhancedText || !documentId}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download DOCX
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
