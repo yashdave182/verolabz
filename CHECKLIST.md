@@ -155,7 +155,7 @@ Use this checklist to ensure everything is set up correctly.
 ## ✅ Final Checks
 
 ### Backend Health
-- [ ] Visited: `http://localhost:5000/api/health` in browser
+- [ ] Visited: `https://doctweaker.vercel.app/health` in browser
 - [ ] Saw JSON response with:
   ```json
   {

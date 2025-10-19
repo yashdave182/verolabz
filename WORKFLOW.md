@@ -506,7 +506,7 @@ Start Application:
 URLs:
   Frontend:  http://localhost:5173/enhanced-doc-tweaker
   Backend:   http://localhost:5000
-  Health:    http://localhost:5000/api/health
+  Health:    https://doctweaker.vercel.app/health
 
 Test Setup:
   python test_setup.py

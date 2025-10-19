@@ -205,7 +205,7 @@ Enhanced Document Ready!
 **Test Backend Directly:**
 ```bash
 # In browser, go to:
-http://localhost:5000/api/health
+https://doctweaker.vercel.app/health
 
 # Should show:
 {

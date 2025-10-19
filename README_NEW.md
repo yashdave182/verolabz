@@ -255,7 +255,7 @@ python backend_api.py
 **"Cannot connect to backend"**
 - Verify backend is running on http://localhost:5000
 - Check console for CORS errors
-- Ensure `.env.local` has `VITE_API_URL=http://localhost:5000/api`
+- Ensure `.env.local` has `VITE_API_URL=https://doctweaker.vercel.app`
 
 **"File upload fails"**
 - Check file size (max 15MB recommended)

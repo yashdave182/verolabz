@@ -122,7 +122,7 @@ cp .env.example .env.local
 Edit `.env.local`:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=https://doctweaker.vercel.app
 ```
 
 #### 3.3 Start Frontend Development Server

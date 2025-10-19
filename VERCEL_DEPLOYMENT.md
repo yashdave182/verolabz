@@ -161,17 +161,17 @@ Make sure `vercel.json` exists with this content:
 
 ### Step 3: Update Frontend Configuration
 
-The frontend is already configured to work with Vercel. It automatically detects if running in production and uses `/api` instead of `http://localhost:5000/api`.
+The frontend is already configured to work with Vercel. It automatically detects if running in production and uses `/api` instead of `https://doctweaker.vercel.app`.
 
 **In `src/lib/enhancedBackendService.ts`:**
 ```typescript
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? "/api" : "http://localhost:5000/api");
+  (import.meta.env.PROD ? "/api" : "https://doctweaker.vercel.app");
 ```
 
 This means:
-- **Development:** Uses `http://localhost:5000/api`
+- **Development:** Uses `https://doctweaker.vercel.app`
 - **Production (Vercel):** Uses `/api` (same domain)
 
 ---

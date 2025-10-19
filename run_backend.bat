@@ -57,7 +57,7 @@ if errorlevel 1 (
 echo Starting Flask backend server...
 echo.
 echo Backend will run on: http://localhost:5000
-echo Health check: http://localhost:5000/api/health
+echo Health check: https://doctweaker.vercel.app/health
 echo.
 echo Press Ctrl+C to stop the server
 echo.
