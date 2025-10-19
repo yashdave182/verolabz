@@ -1,21 +1,27 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { 
-  FileText, 
-  Upload, 
-  Wand2, 
-  Download, 
+import {
+  FileText,
+  Upload,
+  Wand2,
+  Download,
   Zap,
   AlertCircle,
   File,
   X,
-  Loader2
+  Loader2,
 } from "lucide-react";
-import { enhanceDocument } from "@/lib/groq";
 import { parseDocument } from "@/lib/documentParser";
+import { enhanceDocument as enhanceWithBackend } from "@/lib/enhancedBackendService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const DocTweaker = () => {
@@ -30,57 +36,67 @@ const DocTweaker = () => {
 
   const handleTweak = async () => {
     if (!document.trim() || !context.trim()) return;
-    
+
     setIsProcessing(true);
     setError("");
     setTweakedDocument("");
-    
+
     try {
-      const enhanced = await enhanceDocument({
-        document: document.trim(),
-        context: context.trim(),
-        documentType: 'general'
-      });
-      
-      setTweakedDocument(enhanced);
+      const result = await enhanceWithBackend(
+        document.trim(),
+        context.trim(),
+        true,
+      );
+
+      if (result.success && result.enhanced_text) {
+        setTweakedDocument(result.enhanced_text);
+      } else {
+        throw new Error(result.error || "Enhancement failed");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred",
+      );
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploadedFileName(file.name);
-    setError('');
+    setError("");
     setIsParsingFile(true);
 
     try {
       // Parse document directly without backend
       const parseResult = await parseDocument(file);
-      
+
       if (!parseResult.success || !parseResult.content) {
-        throw new Error(parseResult.error || 'Failed to extract text from document');
+        throw new Error(
+          parseResult.error || "Failed to extract text from document",
+        );
       }
 
       setDocument(parseResult.content);
     } catch (error) {
-      console.error('File upload error:', error);
-      setError('Failed to process file. Please try again.');
-      setUploadedFileName('');
+      console.error("File upload error:", error);
+      setError("Failed to process file. Please try again.");
+      setUploadedFileName("");
     } finally {
       setIsParsingFile(false);
     }
   };
 
   const clearUploadedFile = () => {
-    setUploadedFileName('');
-    setDocument('');
+    setUploadedFileName("");
+    setDocument("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -98,7 +114,8 @@ const DocTweaker = () => {
             <span className="block text-primary">Perfected</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Upload any document and describe what you want to achieve. Our AI will enhance it to perfection.
+            Upload any document and describe what you want to achieve. Our AI
+            will enhance it to perfection.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="default" size="lg" className="font-semibold">
@@ -116,14 +133,17 @@ const DocTweaker = () => {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Document Enhancer</CardTitle>
               <CardDescription>
-                Upload your document and tell us your goal for personalized AI enhancement
+                Upload your document and tell us your goal for personalized AI
+                enhancement
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* File Upload Section */}
               <div className="space-y-4">
-                <Label className="text-base font-medium">Upload Document or Paste Text</Label>
-                
+                <Label className="text-base font-medium">
+                  Upload Document or Paste Text
+                </Label>
+
                 {/* File Upload Button */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
@@ -145,7 +165,7 @@ const DocTweaker = () => {
                       </>
                     )}
                   </Button>
-                  
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -153,11 +173,13 @@ const DocTweaker = () => {
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  
+
                   {uploadedFileName && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-primary/20">
                       <File className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium truncate">{uploadedFileName}</span>
+                      <span className="text-sm font-medium truncate">
+                        {uploadedFileName}
+                      </span>
                       <Button
                         type="button"
                         variant="ghost"
@@ -170,7 +192,7 @@ const DocTweaker = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="text-center text-sm text-muted-foreground">
                   or
                 </div>
@@ -202,10 +224,10 @@ const DocTweaker = () => {
                 />
               </div>
 
-              <Button 
+              <Button
                 onClick={handleTweak}
                 disabled={!document.trim() || !context.trim() || isProcessing}
-                className="w-full" 
+                className="w-full"
                 size="lg"
               >
                 {isProcessing ? (
@@ -224,30 +246,32 @@ const DocTweaker = () => {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    {error}
-                  </AlertDescription>
+                  <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
               {tweakedDocument && (
                 <div className="border-t pt-6">
-                  <Label className="text-base font-medium">AI Enhanced Document</Label>
+                  <Label className="text-base font-medium">
+                    AI Enhanced Document
+                  </Label>
                   <div className="mt-2 p-4 bg-muted rounded-lg border border-primary/20">
                     <pre className="whitespace-pre-wrap text-sm text-foreground">
                       {tweakedDocument}
                     </pre>
                   </div>
                   <div className="flex gap-3 mt-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => {
-                        const blob = new Blob([tweakedDocument], { type: 'text/plain' });
+                        const blob = new Blob([tweakedDocument], {
+                          type: "text/plain",
+                        });
                         const url = URL.createObjectURL(blob);
-                        const a = window.document.createElement('a');
+                        const a = window.document.createElement("a");
                         a.href = url;
-                        a.download = 'enhanced-document.txt';
+                        a.download = "enhanced-document.txt";
                         window.document.body.appendChild(a);
                         a.click();
                         window.document.body.removeChild(a);
@@ -257,8 +281,8 @@ const DocTweaker = () => {
                       <Download className="w-4 h-4 mr-2" />
                       Download
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         navigator.clipboard.writeText(tweakedDocument);
