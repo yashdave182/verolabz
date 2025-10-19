@@ -6,7 +6,7 @@
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? "/api" : "https://doctweaker.vercel.app");
+  (import.meta.env.PROD ? "/api" : "http://localhost:3001");
 
 export interface UploadResponse {
   success: boolean;
