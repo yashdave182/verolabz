@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "document-tweaker",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "UNSTRACT_API_KEY": "@unstract-api-key",
+    "GEMINI_API_KEY": "@gemini-api-key"
+  },
+  "functions": {
+    "api/**/*.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build"
+}

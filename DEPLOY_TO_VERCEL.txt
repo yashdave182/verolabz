@@ -1,0 +1,299 @@
+================================================================================
+                DEPLOY DOCUMENT TWEAKER TO VERCEL
+                Quick Step-by-Step Checklist
+================================================================================
+
+TOTAL TIME: 15-20 minutes
+DIFFICULTY: Easy
+
+================================================================================
+BEFORE YOU START
+================================================================================
+
+You need:
+1. GitHub account (free) - https://github.com/signup
+2. Vercel account (free) - https://vercel.com/signup
+3. Unstract API key - https://unstract.com/
+4. Gemini API key - https://makersuite.google.com/app/apikey
+
+================================================================================
+STEP 1: PREPARE CODE FOR GITHUB (5 minutes)
+================================================================================
+
+1. Open terminal in project folder:
+   cd doc_tweak-main
+
+2. Initialize Git (if not already done):
+   git init
+
+3. Add all files:
+   git add .
+   git commit -m "Initial commit - Document Tweaker"
+
+4. Create NEW repository on GitHub:
+   - Go to: https://github.com/new
+   - Repository name: document-tweaker
+   - Public or Private: Choose one
+   - DON'T check "Initialize with README"
+   - Click "Create repository"
+
+5. Copy the commands GitHub shows you:
+   git remote add origin https://github.com/YOUR_USERNAME/document-tweaker.git
+   git branch -M main
+   git push -u origin main
+
+   Replace YOUR_USERNAME with your actual GitHub username!
+
+6. Verify files are on GitHub - refresh the page
+
+================================================================================
+STEP 2: DEPLOY TO VERCEL (5 minutes)
+================================================================================
+
+1. Go to Vercel Dashboard:
+   https://vercel.com/dashboard
+
+2. Click "Add New..." button → "Project"
+
+3. Click "Import Git Repository"
+
+4. Find your "document-tweaker" repository
+   - If you don't see it, click "Adjust GitHub App Permissions"
+   - Grant Vercel access to your repository
+
+5. Click "Import" on your repository
+
+6. Configure Project:
+   - Project Name: document-tweaker (or any name)
+   - Framework Preset: Vite (should auto-detect)
+   - Root Directory: ./ (leave as default)
+   - Build Command: npm run build (auto-detected)
+   - Output Directory: dist (auto-detected)
+
+7. DON'T click Deploy yet! Continue to Step 3...
+
+================================================================================
+STEP 3: ADD ENVIRONMENT VARIABLES (2 minutes)
+================================================================================
+
+IMPORTANT: Without these, your app won't work!
+
+1. In the same Vercel deploy screen, scroll down to:
+   "Environment Variables"
+
+2. Click to expand it
+
+3. Add first variable:
+   - Name: UNSTRACT_API_KEY
+   - Value: [paste your Unstract API key]
+   - Environment: Check all three (Production, Preview, Development)
+   - Click "Add"
+
+4. Add second variable:
+   - Name: GEMINI_API_KEY
+   - Value: [paste your Gemini API key]
+   - Environment: Check all three (Production, Preview, Development)
+   - Click "Add"
+
+5. Verify both variables are listed
+
+================================================================================
+STEP 4: DEPLOY! (3 minutes)
+================================================================================
+
+1. Click the big "Deploy" button
+
+2. Wait for deployment (2-5 minutes)
+   - You'll see a progress animation
+   - Build logs will show the progress
+   - Don't close the window!
+
+3. When done, you'll see:
+   "Congratulations! Your project has been deployed"
+
+4. You'll get a URL like:
+   https://document-tweaker-xxxx.vercel.app
+
+5. Click "Visit" or "Continue to Dashboard"
+
+================================================================================
+STEP 5: TEST YOUR DEPLOYMENT (3 minutes)
+================================================================================
+
+1. Test Health Endpoint:
+   Visit: https://your-app.vercel.app/api/health
+
+   Should show:
+   {
+     "status": "healthy",
+     "unstract_configured": true,
+     "gemini_configured": true,
+     "environment": "vercel"
+   }
+
+2. Test Frontend:
+   Visit: https://your-app.vercel.app/enhanced-doc-tweaker
+
+   Should show:
+   - Application loads
+   - Green "Backend Ready" badge
+   - Upload button works
+
+3. Test Full Flow:
+   - Upload a test document (TXT file is easiest)
+   - Enter: "Make this more professional"
+   - Click "Enhance with AI"
+   - Wait 20-30 seconds
+   - Results should appear!
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "Backend Not Configured" or red badge
+Solution:
+  1. Go to Vercel Dashboard → Your Project → Settings
+  2. Click "Environment Variables"
+  3. Verify UNSTRACT_API_KEY and GEMINI_API_KEY are there
+  4. If missing, add them
+  5. Go to "Deployments" → Click "..." → "Redeploy"
+
+Problem: Build failed
+Solution:
+  1. Check build logs in Vercel Dashboard
+  2. Most common: Missing dependencies
+  3. Run locally: npm install && npm run build
+  4. If it works locally, commit package-lock.json:
+     git add package-lock.json
+     git commit -m "Add package lock"
+     git push
+
+Problem: API endpoints return 404
+Solution:
+  1. Verify api/ folder is in your GitHub repo
+  2. Check vercel.json exists in root folder
+  3. Redeploy from Vercel Dashboard
+
+Problem: Function timeout
+Solution:
+  - Free plan has 10-second timeout
+  - Large documents may take longer
+  - Try with smaller test documents first
+  - Consider upgrading to Pro plan ($20/month) for 60s timeout
+
+================================================================================
+UPDATING YOUR DEPLOYED APP
+================================================================================
+
+Every time you push to GitHub, Vercel auto-deploys!
+
+1. Make changes locally
+2. Commit: git add . && git commit -m "Update feature"
+3. Push: git push
+4. Vercel automatically deploys
+5. Check Deployments in Vercel Dashboard
+
+================================================================================
+CUSTOM DOMAIN (Optional)
+================================================================================
+
+Want your own domain? (like yourdomain.com)
+
+1. Buy a domain from GoDaddy, Namecheap, etc.
+
+2. In Vercel Dashboard:
+   - Go to your project → Settings → Domains
+   - Click "Add"
+   - Enter your domain
+   - Click "Add"
+
+3. Vercel shows DNS records to add
+
+4. In your domain registrar:
+   - Go to DNS settings
+   - Add the A and CNAME records Vercel shows
+   - Save
+
+5. Wait 1-24 hours for DNS propagation
+
+6. Vercel automatically sets up SSL (HTTPS)
+
+7. Access: https://yourdomain.com/enhanced-doc-tweaker
+
+================================================================================
+USEFUL LINKS
+================================================================================
+
+Your Vercel Dashboard:
+https://vercel.com/dashboard
+
+View Deployment Logs:
+Dashboard → Your Project → Deployments → Click on a deployment
+
+Change Environment Variables:
+Dashboard → Your Project → Settings → Environment Variables
+
+View Function Logs:
+Dashboard → Your Project → Functions → Click on a function
+
+================================================================================
+COST
+================================================================================
+
+FREE PLAN (Hobby):
+- Perfect for personal use
+- 100GB bandwidth/month
+- Unlimited deployments
+- 10-second function timeout
+- This is enough for most users!
+
+PRO PLAN ($20/month):
+- 1TB bandwidth/month
+- 60-second function timeout
+- Priority support
+- Good for high traffic
+
+================================================================================
+CHECKLIST - DID YOU COMPLETE ALL STEPS?
+================================================================================
+
+Before deploying:
+[ ] Code pushed to GitHub
+[ ] vercel.json exists
+[ ] api/ folder has health.py and enhance.py
+[ ] api/requirements.txt has dependencies
+
+During deployment:
+[ ] Connected GitHub repo to Vercel
+[ ] Added UNSTRACT_API_KEY environment variable
+[ ] Added GEMINI_API_KEY environment variable
+[ ] Both env vars enabled for Production
+[ ] Clicked Deploy button
+
+After deployment:
+[ ] Visited /api/health - shows "healthy"
+[ ] Visited /enhanced-doc-tweaker - app loads
+[ ] Green "Backend Ready" badge shows
+[ ] Tested with a document - enhancement works
+[ ] Shared URL with friends!
+
+================================================================================
+SUCCESS!
+================================================================================
+
+Your app is now live at:
+https://your-app-name.vercel.app/enhanced-doc-tweaker
+
+Share it with anyone! It's now accessible worldwide! 🌍
+
+Every time you push to GitHub, it auto-updates! 🚀
+
+================================================================================
+NEED MORE HELP?
+================================================================================
+
+Detailed guide: VERCEL_DEPLOYMENT.md
+Vercel docs: https://vercel.com/docs
+Vercel support: https://vercel.com/support
+
+================================================================================

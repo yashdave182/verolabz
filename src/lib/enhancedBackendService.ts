@@ -4,7 +4,9 @@
  * using Unstract OCR and Gemini AI with format preservation
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? "/api" : "http://localhost:5000/api");
 
 export interface UploadResponse {
   success: boolean;
@@ -46,9 +48,9 @@ export interface HealthResponse {
 export const checkBackendHealth = async (): Promise<HealthResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/health`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -58,9 +60,9 @@ export const checkBackendHealth = async (): Promise<HealthResponse> => {
 
     return await response.json();
   } catch (error) {
-    console.error('Backend health check error:', error);
+    console.error("Backend health check error:", error);
     throw new Error(
-      `Backend server is not responding. Please ensure the Flask server is running on ${API_BASE_URL}`
+      `Backend server is not responding. Please ensure the Flask server is running on ${API_BASE_URL}`,
     );
   }
 };
@@ -70,17 +72,17 @@ export const checkBackendHealth = async (): Promise<HealthResponse> => {
  */
 export const uploadDocument = async (
   file: File,
-  mode: 'native_text' | 'low_cost' | 'high_quality' | 'form' | 'table' = 'form',
-  outputMode: 'layout_preserving' | 'text' = 'layout_preserving'
+  mode: "native_text" | "low_cost" | "high_quality" | "form" | "table" = "form",
+  outputMode: "layout_preserving" | "text" = "layout_preserving",
 ): Promise<UploadResponse> => {
   try {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('mode', mode);
-    formData.append('output_mode', outputMode);
+    formData.append("file", file);
+    formData.append("mode", mode);
+    formData.append("output_mode", outputMode);
 
     const response = await fetch(`${API_BASE_URL}/upload`, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
 
@@ -92,10 +94,10 @@ export const uploadDocument = async (
 
     return data;
   } catch (error) {
-    console.error('Document upload error:', error);
+    console.error("Document upload error:", error);
     throw error instanceof Error
       ? error
-      : new Error('Failed to upload document');
+      : new Error("Failed to upload document");
   }
 };
 
@@ -105,13 +107,13 @@ export const uploadDocument = async (
 export const enhanceDocument = async (
   text: string,
   context: string,
-  preserveFormat: boolean = true
+  preserveFormat: boolean = true,
 ): Promise<EnhanceResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/enhance`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         text,
@@ -128,10 +130,10 @@ export const enhanceDocument = async (
 
     return data;
   } catch (error) {
-    console.error('Document enhancement error:', error);
+    console.error("Document enhancement error:", error);
     throw error instanceof Error
       ? error
-      : new Error('Failed to enhance document');
+      : new Error("Failed to enhance document");
   }
 };
 
@@ -141,18 +143,18 @@ export const enhanceDocument = async (
 export const processDocument = async (
   file: File,
   context: string,
-  mode: 'native_text' | 'low_cost' | 'high_quality' | 'form' | 'table' = 'form',
-  preserveFormat: boolean = true
+  mode: "native_text" | "low_cost" | "high_quality" | "form" | "table" = "form",
+  preserveFormat: boolean = true,
 ): Promise<ProcessResponse> => {
   try {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('context', context);
-    formData.append('mode', mode);
-    formData.append('preserve_format', preserveFormat.toString());
+    formData.append("file", file);
+    formData.append("context", context);
+    formData.append("mode", mode);
+    formData.append("preserve_format", preserveFormat.toString());
 
     const response = await fetch(`${API_BASE_URL}/process`, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
 
@@ -164,10 +166,10 @@ export const processDocument = async (
 
     return data;
   } catch (error) {
-    console.error('Document processing error:', error);
+    console.error("Document processing error:", error);
     throw error instanceof Error
       ? error
-      : new Error('Failed to process document');
+      : new Error("Failed to process document");
   }
 };
 
@@ -177,7 +179,7 @@ export const processDocument = async (
 export const downloadDocument = async (documentId: string): Promise<Blob> => {
   try {
     const response = await fetch(`${API_BASE_URL}/download/${documentId}`, {
-      method: 'GET',
+      method: "GET",
     });
 
     if (!response.ok) {
@@ -186,10 +188,10 @@ export const downloadDocument = async (documentId: string): Promise<Blob> => {
 
     return await response.blob();
   } catch (error) {
-    console.error('Document download error:', error);
+    console.error("Document download error:", error);
     throw error instanceof Error
       ? error
-      : new Error('Failed to download document');
+      : new Error("Failed to download document");
   }
 };
 
@@ -207,20 +209,20 @@ export const validateBackendConfiguration = async (): Promise<{
     const missingServices: string[] = [];
 
     if (!health.unstract_configured) {
-      missingServices.push('Unstract API');
+      missingServices.push("Unstract API");
     }
 
     if (!health.gemini_configured) {
-      missingServices.push('Gemini API');
+      missingServices.push("Gemini API");
     }
 
     const isConfigured = missingServices.length === 0;
 
-    let message = '';
+    let message = "";
     if (!isConfigured) {
-      message = `Missing API keys: ${missingServices.join(', ')}. Please configure them in the .env file.`;
+      message = `Missing API keys: ${missingServices.join(", ")}. Please configure them in the .env file.`;
     } else {
-      message = 'Backend is fully configured and ready!';
+      message = "Backend is fully configured and ready!";
     }
 
     return {
@@ -231,9 +233,9 @@ export const validateBackendConfiguration = async (): Promise<{
   } catch (error) {
     return {
       isConfigured: false,
-      missingServices: ['Backend Server'],
+      missingServices: ["Backend Server"],
       message:
-        'Cannot connect to backend server. Please ensure Flask server is running.',
+        "Cannot connect to backend server. Please ensure Flask server is running.",
     };
   }
 };
@@ -241,19 +243,25 @@ export const validateBackendConfiguration = async (): Promise<{
 /**
  * Utility function to detect document type based on file
  */
-export const detectDocumentMode = (file: File): 'native_text' | 'form' | 'table' => {
+export const detectDocumentMode = (
+  file: File,
+): "native_text" | "form" | "table" => {
   const fileName = file.name.toLowerCase();
 
   // Native text for digital PDFs and Word documents
-  if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
-    return 'native_text';
+  if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
+    return "native_text";
   }
 
   // Form mode for most documents (default)
   // Use 'table' if filename suggests it's a table/spreadsheet
-  if (fileName.includes('table') || fileName.includes('sheet') || fileName.includes('data')) {
-    return 'table';
+  if (
+    fileName.includes("table") ||
+    fileName.includes("sheet") ||
+    fileName.includes("data")
+  ) {
+    return "table";
   }
 
-  return 'form';
+  return "form";
 };
