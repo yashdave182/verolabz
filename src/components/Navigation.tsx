@@ -23,8 +23,8 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 hover-glow">
-            <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
-              <img src="/favicon.ico" alt="Verolabz" className="w-5 h-5 object-contain" />
+            <div className="w-14 h-14 flex items-center justify-center">
+              <img src="/favicon.ico" alt="Verolabz" className="w-10 h-10 object-contain" />
             </div>
             <span className="text-xl font-bold text-foreground">Verolabz</span>
           </Link>
