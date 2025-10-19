@@ -1,0 +1,161 @@
+================================================================================
+                EXACT ENVIRONMENT VARIABLE NAMES
+                Copy these EXACTLY as shown
+================================================================================
+
+IMPORTANT: Use these EXACT names when adding variables in Vercel Dashboard
+
+================================================================================
+REQUIRED ENVIRONMENT VARIABLES
+================================================================================
+
+Variable 1:
+-----------
+Name:  UNSTRACT_API_KEY
+Value: [Your Unstract API key from https://unstract.com/]
+
+Example value: sk-abc123xyz456def789
+
+EXACT NAME TO USE: UNSTRACT_API_KEY
+(all uppercase, underscores, no spaces, no dashes)
+
+
+Variable 2:
+-----------
+Name:  GEMINI_API_KEY
+Value: [Your Gemini API key from https://makersuite.google.com/app/apikey]
+
+Example value: AIzaSyABC123XYZ456DEF789
+
+EXACT NAME TO USE: GEMINI_API_KEY
+(all uppercase, underscores, no spaces, no dashes)
+
+
+================================================================================
+HOW TO ADD IN VERCEL DASHBOARD
+================================================================================
+
+Step 1: Go to Vercel project settings
+   https://vercel.com/dashboard → Your Project → Settings
+
+Step 2: Click "Environment Variables" in left sidebar
+
+Step 3: Add first variable
+   Name:        UNSTRACT_API_KEY
+   Value:       [paste your actual key here]
+   Environment: ☑ Production ☑ Preview ☑ Development
+   Click "Save"
+
+Step 4: Add second variable
+   Name:        GEMINI_API_KEY
+   Value:       [paste your actual key here]
+   Environment: ☑ Production ☑ Preview ☑ Development
+   Click "Save"
+
+Step 5: Redeploy
+   Deployments → Latest → "..." menu → "Redeploy"
+
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+❌ WRONG: unstract-api-key (lowercase with dashes)
+✅ CORRECT: UNSTRACT_API_KEY (uppercase with underscores)
+
+❌ WRONG: UnstractApiKey (camelCase)
+✅ CORRECT: UNSTRACT_API_KEY
+
+❌ WRONG: UNSTRACT API KEY (spaces)
+✅ CORRECT: UNSTRACT_API_KEY
+
+❌ WRONG: @unstract-api-key (with @ prefix - that's for secrets)
+✅ CORRECT: UNSTRACT_API_KEY
+
+❌ WRONG: Adding in vercel.json file
+✅ CORRECT: Adding in Vercel Dashboard only
+
+
+================================================================================
+VERIFICATION
+================================================================================
+
+After adding environment variables, test by visiting:
+https://your-app.vercel.app/api/health
+
+Expected response:
+{
+  "status": "healthy",
+  "unstract_configured": true,  ← Should be true
+  "gemini_configured": true,    ← Should be true
+  "environment": "vercel"
+}
+
+If they show false:
+1. Check variable names are EXACTLY as shown above
+2. Check you selected all three environments (Production, Preview, Development)
+3. Redeploy the application
+
+
+================================================================================
+HOW YOUR CODE READS THESE VARIABLES
+================================================================================
+
+In Python (api/health.py and api/enhance.py):
+```python
+import os
+unstract_key = os.environ.get("UNSTRACT_API_KEY")
+gemini_key = os.environ.get("GEMINI_API_KEY")
+```
+
+The names MUST match exactly what's in Vercel Dashboard.
+
+
+================================================================================
+SUMMARY - COPY THIS
+================================================================================
+
+Add these TWO variables in Vercel Dashboard:
+
+1. Name: UNSTRACT_API_KEY
+   Value: [your Unstract key]
+
+2. Name: GEMINI_API_KEY
+   Value: [your Gemini key]
+
+Select: ☑ Production ☑ Preview ☑ Development
+
+Then: Redeploy
+
+
+================================================================================
+CHECKLIST
+================================================================================
+
+Before deploying:
+□ vercel.json does NOT have "env" section
+□ Environment variables will be added in Vercel Dashboard ONLY
+
+During deployment:
+□ Used exact name: UNSTRACT_API_KEY (not unstract-api-key)
+□ Used exact name: GEMINI_API_KEY (not gemini-api-key)
+□ Checked all three environment boxes
+□ Values pasted without quotes
+□ Clicked Save for each variable
+
+After deployment:
+□ Visited /api/health endpoint
+□ Both "configured" fields show true
+□ If false, redeployed after verifying names
+
+
+================================================================================
+NEED MORE HELP?
+================================================================================
+
+See these files:
+- VERCEL_QUICK_START.md - Step-by-step deployment
+- VERCEL_ERRORS_FIX.txt - Common error fixes
+- VERCEL_DEPLOYMENT.md - Complete guide
+
+================================================================================

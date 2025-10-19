@@ -23,9 +23,5 @@
       "memory": 1024,
       "maxDuration": 60
     }
-  },
-  "env": {
-    "UNSTRACT_API_KEY": "@unstract-api-key",
-    "GEMINI_API_KEY": "@gemini-api-key"
   }
 }
