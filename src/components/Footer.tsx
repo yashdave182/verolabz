@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Twitter, Linkedin, Github, Mail, Instagram } from "lucide-react";
+import { Twitter, Linkedin, Github, Mail, Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
+                <img src="/favicon.ico" alt="Verolabz" className="w-5 h-5 object-contain" />
               </div>
               <span className="text-xl font-bold text-foreground">Verolabz</span>
             </Link>

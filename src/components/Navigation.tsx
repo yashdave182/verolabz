@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, FileText, Zap } from "lucide-react";
+import { Menu, X, FileText } from "lucide-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +24,7 @@ const Navigation = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 hover-glow">
             <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+              <img src="/favicon.ico" alt="Verolabz" className="w-5 h-5 object-contain" />
             </div>
             <span className="text-xl font-bold text-foreground">Verolabz</span>
           </Link>
