@@ -200,8 +200,8 @@ class GeminiEnhancerService:
     def __init__(self, api_key: str):
         self.api_key = api_key
         genai.configure(api_key=api_key)
-        # Use the correct model name - gemini-1.5-pro-latest is the stable version
-        self.model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        # Use the Gemini 2.5 Pro model as it's the most advanced
+        self.model = genai.GenerativeModel("gemini-2.5-pro")
 
     def enhance_document(
         self, text: str, context: str, preserve_format: bool = True
@@ -224,7 +224,7 @@ class GeminiEnhancerService:
             # Build prompt with improved structure and clarity
             if preserve_format:
                 system_prompt = """[ROLE]
-You are an expert document enhancer specializing in improving content while preserving exact formatting and layout.
+You are an expert document enhancer specializing in improving content while preserving exact formatting and layout. You are using Gemini 2.5 Pro, our most advanced thinking model.
 
 [FORMAT PRESERVATION RULES]
 1. NEVER modify formatting markers: **bold**, *italic*, <<<PAGE_BREAK>>>, [1], [2], etc.
@@ -241,6 +241,12 @@ You are an expert document enhancer specializing in improving content while pres
 - Make content more professional or engaging as requested
 - Follow the user's specific instructions precisely
 
+[ADVANCED CAPABILITIES]
+As Gemini 2.5 Pro, you can:
+- Reason over complex problems in code, math, and STEM
+- Analyze large datasets and documents using long context
+- Handle sophisticated document structures
+
 [IMPORTANT]
 The document may contain special layout markers such as:
 - Page breaks: <<<PAGE_BREAK>>>
@@ -252,7 +258,7 @@ The document may contain special layout markers such as:
 DO NOT change any of these markers or the document structure."""
             else:
                 system_prompt = """[ROLE]
-You are an expert document enhancer. Improve the document's content based on the user's instructions while maintaining a professional and clear style."""
+You are an expert document enhancer using Gemini 2.5 Pro. Improve the document's content based on the user's instructions while maintaining a professional and clear style."""
 
             # Create a more structured prompt with clear sections
             user_prompt = f"""{system_prompt}
@@ -266,12 +272,12 @@ You are an expert document enhancer. Improve the document's content based on the
 [OUTPUT]
 Return ONLY the enhanced document with exact formatting preserved. Do not include any additional commentary, explanations, or markdown formatting."""
 
-            # Adjust generation parameters based on context for better quality
-            # Default parameters
+            # Adjust generation parameters to take advantage of Gemini 2.5 Pro capabilities
+            # Default parameters optimized for Gemini 2.5 Pro
             temperature = 0.3
-            top_p = 0.9
-            top_k = 40
-            max_output_tokens = 8192
+            top_p = 0.95
+            top_k = 64
+            max_output_tokens = 16384  # Take advantage of larger context window
             
             # Adjust parameters based on context keywords
             context_lower = context.lower()
@@ -281,6 +287,8 @@ Return ONLY the enhanced document with exact formatting preserved. Do not includ
                 temperature = 0.2  # More precise
             elif any(word in context_lower for word in ["grammar", "spelling", "fix"]):
                 temperature = 0.1  # Most consistent
+            elif any(word in context_lower for word in ["technical", "code", "math", "stem"]):
+                temperature = 0.4  # Balanced for technical content
 
             # Use proper system instruction and generation configuration
             response = self.model.generate_content(
@@ -300,7 +308,7 @@ Return ONLY the enhanced document with exact formatting preserved. Do not includ
             enhanced_text = response.text.strip()
 
             print(f"[Gemini] Enhancement complete. Output length: {len(enhanced_text)}")
-            print(f"[Gemini] Used parameters: temp={temperature}, top_p={top_p}, top_k={top_k}")
+            print(f"[Gemini] Used parameters: temp={temperature}, top_p={top_p}, top_k={top_k}, max_tokens={max_output_tokens}")
 
             return {"success": True, "text": enhanced_text}
 
