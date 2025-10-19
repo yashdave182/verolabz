@@ -54,7 +54,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link 
-                  to="/business" 
+                  to="/enhanced-doc-tweaker" 
                   className="text-muted-foreground hover:text-foreground transition-smooth"
                 >
                   For Business
@@ -62,7 +62,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/students" 
+                  to="/enhanced-doc-tweaker" 
                   className="text-muted-foreground hover:text-foreground transition-smooth"
                 >
                   For Students

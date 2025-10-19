@@ -46,7 +46,7 @@ const HowItWorks = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6">
-            How <span className="text-primary">DocTweak</span> Works
+            How <span className="text-primary">Verolabz</span> Works
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Transform any document in just 4 simple steps. Our AI-powered enhancement 
@@ -105,7 +105,7 @@ const HowItWorks = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="border-destructive/20">
               <CardHeader>
-                <CardTitle className="text-destructive">Before DocTweak</CardTitle>
+                <CardTitle className="text-destructive">Before Verolabz</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="bg-destructive/5 p-4 rounded-lg text-sm">
@@ -134,7 +134,7 @@ const HowItWorks = () => {
 
             <Card className="border-success/20">
               <CardHeader>
-                <CardTitle className="text-success">After DocTweak</CardTitle>
+                <CardTitle className="text-success">After Verolabz</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="bg-success/5 p-4 rounded-lg text-sm">
@@ -189,10 +189,10 @@ const HowItWorks = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="hero" size="lg" asChild>
-              <Link to="/business">Try for Business</Link>
+              <Link to="/enhanced-doc-tweaker">Try for Business</Link>
             </Button>
             <Button variant="student" size="lg" asChild>
-              <Link to="/students">Try for Students</Link>
+              <Link to="/enhanced-doc-tweaker">Try for Students</Link>
             </Button>
           </div>
         </div>

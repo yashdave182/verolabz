@@ -51,7 +51,7 @@ const Index = () => {
   const testimonials = [
     {
       quote:
-        "DocTweak helped me land my dream job. My resume and cover letter were transformed!",
+        "Verolabz helped me land my dream job. My resume and cover letter were transformed!",
       author: "Sarah Chen",
       role: "Software Engineer",
     },

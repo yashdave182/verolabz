@@ -33,7 +33,7 @@ const Community = () => {
     {
       icon: Lightbulb,
       title: "Share Ideas",
-      description: "Exchange tips, tricks, and innovative ways to use DocTweak."
+      description: "Exchange tips, tricks, and innovative ways to use Verolabz."
     },
     {
       icon: Trophy,
@@ -45,7 +45,7 @@ const Community = () => {
   const communityGuidelines = [
     "Be respectful and inclusive to all members",
     "Share knowledge and help others when possible",
-    "Keep discussions relevant to document creation and DocTweak",
+    "Keep discussions relevant to document creation and Verolabz",
     "No self-promotion or spamming",
     "Report any inappropriate behavior to moderators"
   ];
@@ -60,7 +60,7 @@ const Community = () => {
             Join Our Community
           </div>
           <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6">
-            DocTweak
+            Verolabz
             <span className="block text-primary">Community</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -109,7 +109,7 @@ const Community = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Community Features</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our Slack community offers exclusive channels and resources to help you get the most out of DocTweak
+              Our Slack community offers exclusive channels and resources to help you get the most out of Verolabz
             </p>
           </div>
           
@@ -131,7 +131,7 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">General Discussion</h4>
-                    <p className="text-sm text-muted-foreground">For all your DocTweak questions and conversations</p>
+                    <p className="text-sm text-muted-foreground">For all your Verolabz questions and conversations</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -149,7 +149,7 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">Tips & Tricks</h4>
-                    <p className="text-sm text-muted-foreground">Share and discover efficient ways to use DocTweak</p>
+                    <p className="text-sm text-muted-foreground">Share and discover efficient ways to use Verolabz</p>
                   </div>
                 </div>
               </CardContent>
@@ -231,7 +231,7 @@ const Community = () => {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Join Our Community?</h2>
           <p className="text-muted-foreground mb-8">
-            Connect with like-minded document creators and get the most out of DocTweak
+            Connect with like-minded document creators and get the most out of Verolabz
           </p>
           <Button 
             onClick={handleJoinSlack}
