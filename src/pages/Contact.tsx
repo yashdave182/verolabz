@@ -32,7 +32,7 @@ const Contact = () => {
       icon: Mail,
       title: "Email Support",
       description: "Get help with your documents",
-      contact: "support@doctweak.com, ladkenil80@gmail.com",
+      contact: "support@verolabz.com, ladkenil80@gmail.com",
       available: "24/7 Response"
     },
     {
@@ -74,7 +74,7 @@ const Contact = () => {
             Get in <span className="text-primary">Touch</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Have questions about DocTweak? Need help with your documents? 
+            Have questions about Verolabz? Need help with your documents? 
             We're here to help you succeed.
           </p>
         </div>

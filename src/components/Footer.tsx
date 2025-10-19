@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-foreground">DocTweak</span>
+              <span className="text-xl font-bold text-foreground">Verolabz</span>
             </Link>
             <p className="text-muted-foreground mb-4 max-w-md">
               AI-powered document enhancement for professionals, students, and freelancers. 
@@ -41,7 +41,7 @@ const Footer = () => {
                 </a>
               </Button>
               <Button variant="ghost" size="sm" className="w-9 h-9 p-0" asChild>
-                <a href="mailto:support@doctweak.com">
+                <a href="mailto:support@verolabz.com">
                   <Mail className="w-4 h-4" />
                 </a>
               </Button>
@@ -121,7 +121,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © 2024 DocTweak. All rights reserved.
+            © 2024 Verolabz. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground mt-2 sm:mt-0">
             Made with ❤️ for better documents

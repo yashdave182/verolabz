@@ -168,7 +168,7 @@ const HowItWorks = () => {
       {/* Benefits Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose DocTweak?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Verolabz?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-center space-x-3">
@@ -185,7 +185,7 @@ const HowItWorks = () => {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Documents?</h2>
           <p className="text-muted-foreground mb-8">
-            Join thousands of professionals who trust DocTweak to enhance their documents.
+            Join thousands of professionals who trust Verolabz to enhance their documents.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="hero" size="lg" asChild>

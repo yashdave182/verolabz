@@ -155,7 +155,7 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-4">
-            Why Choose DocTweak?
+            Why Choose Verolabz?
           </h2>
           <p className="text-xl text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
             Everything you need to create professional, impactful documents
@@ -214,7 +214,7 @@ const Index = () => {
             Ready to Transform Your Documents?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of professionals who use DocTweak to create better
+            Join thousands of professionals who use Verolabz to create better
             documents faster.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

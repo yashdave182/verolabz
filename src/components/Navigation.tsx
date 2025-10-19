@@ -26,7 +26,7 @@ const Navigation = () => {
             <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">DocTweak</span>
+            <span className="text-xl font-bold text-foreground">Verolabz</span>
           </Link>
 
           {/* Desktop Navigation */}
