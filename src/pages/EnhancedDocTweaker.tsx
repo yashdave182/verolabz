@@ -49,6 +49,8 @@ const EnhancedDocTweaker = () => {
     message: string;
     checked: boolean;
   }>({ isConfigured: false, message: '', checked: false });
+  // Add state for detailed processing messages
+  const [processingMessage, setProcessingMessage] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -79,8 +81,9 @@ const EnhancedDocTweaker = () => {
     }
   };
 
-  const updateProgress = (stage: ProcessingStage) => {
+  const updateProgress = (stage: ProcessingStage, message: string = "") => {
     setProcessingStage(stage);
+    setProcessingMessage(message);
     const progressMap: Record<ProcessingStage, number> = {
       idle: 0,
       uploading: 20,
@@ -149,7 +152,7 @@ const EnhancedDocTweaker = () => {
     setIsProcessing(true);
     setError("");
     setEnhancedText("");
-    updateProgress('uploading');
+    updateProgress('uploading', "Uploading document...");
 
     try {
       const file = fileInputRef.current?.files?.[0];
@@ -158,16 +161,16 @@ const EnhancedDocTweaker = () => {
         // Process uploaded file
         const mode = detectDocumentMode(file);
 
-        updateProgress('ocr');
+        updateProgress('ocr', "Extracting text with Unstract OCR...");
         toast({
           title: "Extracting Text",
           description: "Using Unstract OCR to extract text from your document...",
         });
 
-        updateProgress('enhancing');
+        updateProgress('enhancing', "Enhancing with Gemini AI... This may take a moment.");
         toast({
           title: "Enhancing Document",
-          description: "Gemini AI is improving your document...",
+          description: "Gemini AI is improving your document while preserving layout...",
         });
 
         const result = await processDocument(file, context.trim(), mode, true);
@@ -180,7 +183,11 @@ const EnhancedDocTweaker = () => {
         setEnhancedText(result.enhanced_text || '');
         setDocumentId(result.document_id || '');
 
-        updateProgress('complete');
+        updateProgress('formatting', "Applying format preservation...");
+        // Small delay to show formatting step
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        updateProgress('complete', "Complete!");
 
         toast({
           title: "Success!",
@@ -189,7 +196,7 @@ const EnhancedDocTweaker = () => {
 
       } else if (document.trim()) {
         // Process pasted text (direct enhancement without OCR)
-        updateProgress('enhancing');
+        updateProgress('enhancing', "Enhancing with Gemini AI... This may take a moment.");
 
         // For direct text, we'll use the backend's enhance endpoint
         const { enhanceDocument } = await import('@/lib/enhancedBackendService');
@@ -202,7 +209,7 @@ const EnhancedDocTweaker = () => {
         setOriginalText(document.trim());
         setEnhancedText(result.enhanced_text || '');
 
-        updateProgress('complete');
+        updateProgress('complete', "Complete!");
 
         toast({
           title: "Success!",
@@ -214,7 +221,7 @@ const EnhancedDocTweaker = () => {
       console.error('Processing error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
-      updateProgress('error');
+      updateProgress('error', "Error occurred");
 
       toast({
         title: "Error",
@@ -412,6 +419,9 @@ const EnhancedDocTweaker = () => {
                     <span className="text-sm text-muted-foreground">{progress}%</span>
                   </div>
                   <Progress value={progress} className="w-full" />
+                  {processingMessage && (
+                    <p className="text-xs text-muted-foreground text-center">{processingMessage}</p>
+                  )}
                 </div>
               )}
 

@@ -220,17 +220,20 @@ class GeminiEnhancerService:
             print(f"[Gemini] Starting enhancement. Text length: {len(text)}")
             print(f"[Gemini] Context: {context}")
 
-            # Build prompt
+            # Build prompt with comprehensive layout preservation instructions
             if preserve_format:
-                system_prompt = """You are an expert document enhancer. Your task is to improve the document while STRICTLY PRESERVING all formatting markers and layout structure.
+                system_prompt = """You are an expert document enhancer. Your task is to improve the document while STRICTLY PRESERVING all formatting markers and layout structure. This is CRITICAL for the user's workflow.
 
-CRITICAL RULES:
-1. Keep ALL formatting markers exactly as they are (bold markers, line breaks, spacing, indentation)
+CRITICAL RULES FOR FORMAT PRESERVATION:
+1. Keep ALL formatting markers exactly as they are (bold markers **text**, line breaks, spacing, indentation)
 2. Maintain the same document structure (headings, paragraphs, lists, tables)
 3. Preserve line numbers if present
 4. Keep page breaks (<<<PAGE_BREAK>>>) in the same positions
 5. Maintain vertical and horizontal line markers (|, -, +, etc.)
 6. Preserve indentation and spacing patterns
+7. Keep all special characters and symbols in their original positions
+8. Do not add or remove any lines or paragraphs
+9. Do not change the order of content blocks
 
 Your enhancements should focus on:
 - Improving clarity and readability of the text content
@@ -239,28 +242,37 @@ Your enhancements should focus on:
 - Making the content more professional and impactful
 - Following the user's specific instructions
 
-DO NOT change the structure, formatting markers, or layout. Only improve the actual text content."""
+IMPORTANT: The document may contain special layout markers such as:
+- Page breaks: <<<PAGE_BREAK>>>
+- Line numbers: [1], [2], [3], etc.
+- Table structures with | and - characters
+- Indentation with spaces or tabs
+- Special formatting markers
+
+DO NOT change the structure, formatting markers, or layout. Only improve the actual text content within these constraints."""
             else:
                 system_prompt = """You are an expert document enhancer. Improve the document's content based on the user's instructions while maintaining a professional and clear style."""
 
+            # Create a more structured prompt with clear sections
             user_prompt = f"""{system_prompt}
 
 USER'S ENHANCEMENT REQUEST:
 {context}
 
-ORIGINAL DOCUMENT:
+ORIGINAL DOCUMENT WITH LAYOUT MARKERS:
 {text}
 
-Please provide the enhanced version. Return ONLY the enhanced document without any additional commentary or explanations."""
+Please provide the enhanced version that follows ALL the format preservation rules above. Return ONLY the enhanced document without any additional commentary, explanations, or markdown formatting."""
 
-            # Generate enhanced content
+            # Use proper system instruction and generation configuration
             response = self.model.generate_content(
                 user_prompt,
                 generation_config={
-                    "temperature": 0.3,
+                    "temperature": 0.3,  # Low temperature for consistency
                     "top_p": 0.9,
                     "top_k": 40,
                     "max_output_tokens": 8192,
+                    "response_mime_type": "text/plain"
                 },
             )
 
@@ -385,6 +397,7 @@ def upload_document():
 @app.route("/api/enhance", methods=["POST"])
 def enhance_document():
     """Enhance document using Gemini AI with format preservation"""
+    start_time = time.time()
     try:
         data = request.json
 
@@ -406,12 +419,20 @@ def enhance_document():
                 {"success": False, "error": "Gemini API key not configured"}
             ), 500
 
+        # Log input details for performance monitoring
+        print(f"[Enhance] Processing document of length: {len(original_text)}")
+        print(f"[Enhance] Context: {context}")
+        print(f"[Enhance] Preserve format: {preserve_format}")
+
         # Extract format template from original text
         print("[Format] Extracting format template...")
+        format_start = time.time()
         processor = DocumentProcessor()
         original_template = processor.extractor.extract_from_text_patterns(
             original_text
         )
+        format_time = time.time() - format_start
+        print(f"[Format] Template extraction completed in {format_time:.2f} seconds")
 
         # Save original template
         template_id = str(uuid.uuid4())
@@ -420,10 +441,13 @@ def enhance_document():
 
         # Enhance with Gemini
         print("[Enhancement] Starting Gemini enhancement...")
+        gemini_start = time.time()
         gemini_service = GeminiEnhancerService(GEMINI_API_KEY)
         enhancement_result = gemini_service.enhance_document(
             original_text, context, preserve_format=preserve_format
         )
+        gemini_time = time.time() - gemini_start
+        print(f"[Enhancement] Gemini processing completed in {gemini_time:.2f} seconds")
 
         if not enhancement_result["success"]:
             return jsonify(enhancement_result), 500
@@ -432,13 +456,19 @@ def enhance_document():
 
         # Apply format template to enhanced text
         print("[Format] Applying format template to enhanced text...")
+        apply_start = time.time()
         formatted_result = processor.applier.apply_format_smart(
             enhanced_text, original_template
         )
+        apply_time = time.time() - apply_start
+        print(f"[Format] Format application completed in {apply_time:.2f} seconds")
 
         # Save formatted result
         result_path = PROCESSED_FOLDER / f"{template_id}_result.json"
         formatted_result.save(str(result_path))
+
+        total_time = time.time() - start_time
+        print(f"[Enhance] Total processing time: {total_time:.2f} seconds")
 
         return jsonify(
             {
@@ -446,6 +476,12 @@ def enhance_document():
                 "enhanced_text": enhanced_text,
                 "template_id": template_id,
                 "format_preserved": preserve_format,
+                "processing_time": {
+                    "format_extraction": format_time,
+                    "gemini_enhancement": gemini_time,
+                    "format_application": apply_time,
+                    "total": total_time
+                }
             }
         )
 

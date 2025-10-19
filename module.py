@@ -138,16 +138,24 @@ class TextFormatExtractor:
         template = FormatTemplate()
         lines = text.split('\n')
         
-        for line in lines:
+        for line_num, line in enumerate(lines):
             if not line.strip():
+                # Preserve empty lines
+                template.blocks.append(FormattedBlock(
+                    text="",
+                    block_format=BlockFormat(
+                        type=BlockType.PARAGRAPH,
+                        margin_bottom=10
+                    )
+                ))
                 continue
             
-            block = self._analyze_line_format(line)
+            block = self._analyze_line_format(line, line_num)
             template.blocks.append(block)
         
         return template
     
-    def _analyze_line_format(self, line: str) -> FormattedBlock:
+    def _analyze_line_format(self, line: str, line_num: int = 0) -> FormattedBlock:
         """Analyze a line and guess its formatting"""
         
         # Check if it's a heading
@@ -177,6 +185,17 @@ class TextFormatExtractor:
                     type=BlockType.LIST_ITEM,
                     margin_left=20,
                     list_style="bullet"
+                )
+            )
+        
+        # Check for special markers
+        if "<<<PAGE_BREAK>>>" in line:
+            # Handle page breaks
+            return FormattedBlock(
+                text=line.strip(),
+                block_format=BlockFormat(
+                    type=BlockType.PARAGRAPH,
+                    margin_bottom=20
                 )
             )
         
@@ -275,20 +294,30 @@ class FormatApplier:
         """
         new_template = FormatTemplate(metadata=template.metadata.copy())
         
-        # Analyze both old and new structure
-        old_structure = self._analyze_structure(template)
-        new_blocks = self._split_into_blocks(new_text)
+        # Split new text into blocks preserving line structure
+        new_lines = new_text.split('\n')
+        template_lines = []
+        for block in template.blocks:
+            template_lines.append(block.text)
         
-        # Match new blocks to old structure
-        for new_block_text in new_blocks:
-            # Determine what type of block this should be
-            block_type = self._classify_block(new_block_text, old_structure)
+        # Map new lines to template preserving structure
+        for i, new_line in enumerate(new_lines):
+            if i < len(template.blocks):
+                # Use existing format
+                old_block = template.blocks[i]
+                new_block = self._apply_block_format(new_line, old_block)
+            else:
+                # Create new block with default format from last block
+                if template.blocks:
+                    last_format = template.blocks[-1].block_format
+                else:
+                    last_format = BlockFormat(type=BlockType.PARAGRAPH)
+                
+                new_block = FormattedBlock(
+                    text=new_line,
+                    block_format=last_format
+                )
             
-            # Find matching format from template
-            matching_format = self._find_matching_format(block_type, template)
-            
-            # Apply format
-            new_block = self._apply_block_format(new_block_text, matching_format)
             new_template.blocks.append(new_block)
         
         return new_template
@@ -374,6 +403,10 @@ class FormatApplier:
             return BlockType.LIST_ITEM
         if re.match(r'^\d+[\.)]\s', text):
             return BlockType.LIST_ITEM
+        
+        # Check for page breaks
+        if "<<<PAGE_BREAK>>>" in text:
+            return BlockType.PARAGRAPH  # Treat as special paragraph
         
         # Default: paragraph
         return BlockType.PARAGRAPH
