@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,38 +21,88 @@ import {
   Loader2,
 } from "lucide-react";
 import { parseDocument } from "@/lib/documentParser";
-import { enhanceDocument as enhanceWithBackend } from "@/lib/enhancedBackendService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 const DocTweaker = () => {
-  const [document, setDocument] = useState("");
+  const [documentText, setDocumentText] = useState(""); // Renamed from "document"
   const [context, setContext] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [tweakedDocument, setTweakedDocument] = useState("");
   const [error, setError] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [isParsingFile, setIsParsingFile] = useState(false);
+  const [docxFile, setDocxFile] = useState<File | null>(null); // For .docx files
+  const [enhancedDocxBlob, setEnhancedDocxBlob] = useState<Blob | null>(null); // For enhanced .docx files
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  // New function to call the Hugging Face API
+  const enhanceDocumentWithHuggingFace = async (file: File, prompt: string): Promise<Blob> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("user_prompt", prompt);
+    formData.append("model_choice", "gemini-2.0-flash");
+
+    const response = await fetch("https://omgy-verolabz.hf.space/process-document", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`API error: ${err}`);
+    }
+
+    return await response.blob(); // The enhanced .docx file
+  };
 
   const handleTweak = async () => {
-    if (!document.trim() || !context.trim()) return;
+    // If we have a .docx file, use the Hugging Face API
+    if (docxFile) {
+      if (!context.trim()) {
+        setError("Please provide enhancement instructions");
+        return;
+      }
+
+      setIsProcessing(true);
+      setError("");
+      setTweakedDocument("");
+
+      try {
+        const enhancedBlob = await enhanceDocumentWithHuggingFace(docxFile, context.trim());
+        setEnhancedDocxBlob(enhancedBlob);
+        
+        toast({
+          title: "Success!",
+          description: "Your document has been enhanced successfully.",
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred",
+        );
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // For text-based enhancement (non-.docx files)
+    if (!documentText.trim() || !context.trim()) return; // Updated reference
 
     setIsProcessing(true);
     setError("");
     setTweakedDocument("");
 
     try {
-      const result = await enhanceWithBackend(
-        document.trim(),
-        context.trim(),
-        true,
-      );
-
-      if (result.success && result.enhanced_text) {
-        setTweakedDocument(result.enhanced_text);
-      } else {
-        throw new Error(result.error || "Enhancement failed");
-      }
+      // Since we're removing backend support, we'll just return the original document
+      // In a real implementation, you might want to integrate with a browser-based AI model
+      setTweakedDocument(documentText.trim()); // Updated reference
+      
+      toast({
+        title: "Notice",
+        description: "Text enhancement is not available in this version. Returning original text.",
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unexpected error occurred",
@@ -71,18 +121,28 @@ const DocTweaker = () => {
     setUploadedFileName(file.name);
     setError("");
     setIsParsingFile(true);
+    setDocxFile(null);
+    setEnhancedDocxBlob(null);
 
     try {
-      // Parse document directly without backend
-      const parseResult = await parseDocument(file);
+      // Check if it's a .docx file
+      if (file.name.endsWith('.docx')) {
+        setDocxFile(file);
+        // For .docx files, we don't parse the content, we'll send it directly to the API
+        setDocumentText(""); // Updated reference
+      } else {
+        // Parse document directly without backend for other file types
+        const parseResult = await parseDocument(file);
 
-      if (!parseResult.success || !parseResult.content) {
-        throw new Error(
-          parseResult.error || "Failed to extract text from document",
-        );
+        if (!parseResult.success || !parseResult.content) {
+          throw new Error(
+            parseResult.error || "Failed to extract text from document",
+          );
+        }
+
+        setDocumentText(parseResult.content); // Updated reference
+        setDocxFile(null); // Clear .docx file reference
       }
-
-      setDocument(parseResult.content);
     } catch (error) {
       console.error("File upload error:", error);
       setError("Failed to process file. Please try again.");
@@ -94,9 +154,45 @@ const DocTweaker = () => {
 
   const clearUploadedFile = () => {
     setUploadedFileName("");
-    setDocument("");
+    setDocumentText(""); // Updated reference
+    setDocxFile(null);
+    setEnhancedDocxBlob(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const downloadEnhancedDocx = () => {
+    if (!enhancedDocxBlob) {
+      toast({
+        title: "Error",
+        description: "No enhanced file available for download.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const url = URL.createObjectURL(enhancedDocxBlob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = `enhanced_${uploadedFileName || 'document'}.docx`;
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Downloaded",
+        description: "Enhanced document has been downloaded.",
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the enhanced document. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -141,7 +237,7 @@ const DocTweaker = () => {
               {/* File Upload Section */}
               <div className="space-y-4">
                 <Label className="text-base font-medium">
-                  Upload Document or Paste Text
+                  Upload Document
                 </Label>
 
                 {/* File Upload Button */}
@@ -192,24 +288,35 @@ const DocTweaker = () => {
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="text-center text-sm text-muted-foreground">
-                  or
+              {/* Document text area - only show for non-.docx files */}
+              {!docxFile && (
+                <div>
+                  <Label htmlFor="document" className="text-base font-medium">
+                    Your Document
+                  </Label>
+                  <Textarea
+                    id="document"
+                    placeholder="Paste your document here..."
+                    className="min-h-[200px] mt-2"
+                    value={documentText} // Updated reference
+                    onChange={(e) => setDocumentText(e.target.value)} // Updated reference
+                  />
                 </div>
-              </div>
+              )}
 
-              <div>
-                <Label htmlFor="document" className="text-base font-medium">
-                  Your Document
-                </Label>
-                <Textarea
-                  id="document"
-                  placeholder="Paste your document here..."
-                  className="min-h-[200px] mt-2"
-                  value={document}
-                  onChange={(e) => setDocument(e.target.value)}
-                />
-              </div>
+              {/* Special note for .docx files */}
+              {docxFile && (
+                <Alert>
+                  <FileText className="h-4 w-4" />
+                  <AlertDescription>
+                    You've uploaded a .docx file. When you click "Enhance with AI", 
+                    your document will be sent to our AI service for enhancement while 
+                    preserving the original formatting.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div>
                 <Label htmlFor="context" className="text-base font-medium">
@@ -226,7 +333,7 @@ const DocTweaker = () => {
 
               <Button
                 onClick={handleTweak}
-                disabled={!document.trim() || !context.trim() || isProcessing}
+                disabled={(!documentText.trim() && !docxFile) || !context.trim() || isProcessing} // Updated reference
                 className="w-full"
                 size="lg"
               >
@@ -250,7 +357,31 @@ const DocTweaker = () => {
                 </Alert>
               )}
 
-              {tweakedDocument && (
+              {/* Download button for enhanced .docx files */}
+              {enhancedDocxBlob && (
+                <div className="border-t pt-6">
+                  <Label className="text-base font-medium">
+                    Enhanced Document Ready
+                  </Label>
+                  <div className="mt-2 p-4 bg-muted rounded-lg border border-primary/20">
+                    <p className="text-sm text-foreground">
+                      Your .docx document has been successfully enhanced while preserving formatting.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 mt-4">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={downloadEnhancedDocx}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Enhanced Document
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {tweakedDocument && !docxFile && (
                 <div className="border-t pt-6">
                   <Label className="text-base font-medium">
                     AI Enhanced Document
