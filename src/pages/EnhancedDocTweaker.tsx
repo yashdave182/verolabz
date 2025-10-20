@@ -27,7 +27,8 @@ import {
   processDocument,
   validateBackendConfiguration,
   detectDocumentMode,
-  downloadDocument
+  downloadDocument,
+  downloadTextAsDocx
 } from "@/lib/enhancedBackendService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -234,37 +235,67 @@ const EnhancedDocTweaker = () => {
   };
 
   const handleDownload = (format: 'txt' | 'docx' = 'docx') => {
-    if (!enhancedText || !documentId) return;
+    if (!enhancedText) return;
 
     // For DOCX format, we need to use the backend service
-    if (format === 'docx' && documentId) {
-      // Use the backend service to generate and download DOCX
-      downloadDocument(documentId, 'docx')
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          const a = window.document.createElement('a');
-          a.href = url;
-          a.download = `enhanced_${uploadedFileName || 'document'}.docx`;
-          window.document.body.appendChild(a);
-          a.click();
-          window.document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+    if (format === 'docx') {
+      if (documentId) {
+        // Use the backend service to generate and download DOCX for uploaded files
+        downloadDocument(documentId, 'docx')
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = window.document.createElement('a');
+            a.href = url;
+            a.download = `enhanced_${uploadedFileName || 'document'}.docx`;
+            window.document.body.appendChild(a);
+            a.click();
+            window.document.body.removeChild(a);
+            URL.revokeObjectURL(url);
 
-          toast({
-            title: "Downloaded",
-            description: "Enhanced document has been downloaded as Word document.",
+            toast({
+              title: "Downloaded",
+              description: "Enhanced document has been downloaded as Word document.",
+            });
+          })
+          .catch(error => {
+            console.error('Download error:', error);
+            toast({
+              title: "Download Failed",
+              description: "Failed to download as Word document. Downloading as text instead.",
+              variant: "destructive",
+            });
+            // Fallback to text download
+            handleDownloadTxt();
           });
-        })
-        .catch(error => {
-          console.error('Download error:', error);
-          toast({
-            title: "Download Failed",
-            description: "Failed to download as Word document. Downloading as text instead.",
-            variant: "destructive",
+      } else {
+        // For pasted text (no documentId), use direct text-to-docx conversion
+        downloadTextAsDocx(enhancedText, `enhanced_${uploadedFileName || 'document'}.docx`)
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = window.document.createElement('a');
+            a.href = url;
+            a.download = `enhanced_${uploadedFileName || 'document'}.docx`;
+            window.document.body.appendChild(a);
+            a.click();
+            window.document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast({
+              title: "Downloaded",
+              description: "Enhanced document has been downloaded as Word document.",
+            });
+          })
+          .catch(error => {
+            console.error('Download error:', error);
+            toast({
+              title: "Download Failed",
+              description: "Failed to download as Word document. Downloading as text instead.",
+              variant: "destructive",
+            });
+            // Fallback to text download
+            handleDownloadTxt();
           });
-          // Fallback to text download
-          handleDownloadTxt();
-        });
+      }
     } else {
       // Original TXT format
       handleDownloadTxt();

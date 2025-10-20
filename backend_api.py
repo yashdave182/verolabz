@@ -19,7 +19,7 @@ import traceback
 import google.generativeai as genai
 
 # Import format processor with WordExporter
-from module import DocumentProcessor, RichFormatTemplate, TextFormatExtractor, FormatApplier, WordExporter
+from module import DocumentProcessor, RichFormatTemplate, TextFormatExtractor, FormatApplier, WordExporter, BlockFormat, BlockType, RichFormatBlock, PositionInfo
 
 app = Flask(__name__)
 # Enable CORS for React frontend - configure origins from environment variable
@@ -723,6 +723,74 @@ def download_document(document_id):
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+@app.route("/api/download-text", methods=["POST"])
+def download_text_as_docx():
+    """Download plain text as DOCX format"""
+    try:
+        data = request.json
+        text = data.get("text", "")
+        filename = data.get("filename", "enhanced_document.docx")
+
+        if not text:
+            return jsonify({"success": False, "error": "No text provided"}), 400
+
+        # Create a simple template from the text
+        template = RichFormatTemplate()
+        
+        # Split text into paragraphs
+        paragraphs = text.split('\n\n')
+        for i, paragraph in enumerate(paragraphs):
+            if paragraph.strip():
+                # Create a proper RichFormatBlock
+                block_format = BlockFormat(
+                    type=BlockType.PARAGRAPH,
+                    margin_bottom=10
+                )
+                
+                block = RichFormatBlock(
+                    text=paragraph.strip(),
+                    block_format=block_format,
+                    char_formats=[],
+                    position=PositionInfo(y=i * 20),
+                    metadata={}
+                )
+                template.blocks.append(block)
+
+        # Generate DOCX file using WordExporter
+        print(f"[Download-Text] Generating DOCX from text")
+        
+        exporter = WordExporter()
+        
+        # Create temporary file path
+        docx_filename = filename if filename.endswith('.docx') else f"{filename}.docx"
+        docx_path = PROCESSED_FOLDER / docx_filename
+        
+        # Export to DOCX
+        exporter.export(template, str(docx_path))
+        
+        # Read file into BytesIO buffer
+        with open(docx_path, 'rb') as f:
+            buffer = BytesIO(f.read())
+        buffer.seek(0)
+        
+        # Clean up temporary file
+        try:
+            docx_path.unlink()
+        except:
+            pass
+
+        return send_file(
+            buffer,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            as_attachment=True,
+            download_name=docx_filename,
+        )
+
+    except Exception as e:
+        print(f"[Download-Text] Exception: {str(e)}")
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ============================================================================
 # MAIN

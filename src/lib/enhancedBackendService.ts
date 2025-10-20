@@ -196,6 +196,35 @@ export const downloadDocument = async (documentId: string, format: 'txt' | 'docx
 };
 
 /**
+ * Download enhanced text as DOCX directly (for pasted text without documentId)
+ */
+export const downloadTextAsDocx = async (text: string, filename: string = 'enhanced_document.docx'): Promise<Blob> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/download-text`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        filename
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status}`);
+    }
+
+    return await response.blob();
+  } catch (error) {
+    console.error("Text download as DOCX error:", error);
+    throw error instanceof Error
+      ? error
+      : new Error("Failed to download text as DOCX");
+  }
+};
+
+/**
  * Helper function to validate backend configuration
  */
 export const validateBackendConfiguration = async (): Promise<{
