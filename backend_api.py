@@ -715,7 +715,7 @@ def download_document(document_id):
                 buffer,
                 mimetype="text/plain",
                 as_attachment=True,
-                download_name=f"enhanced_document_{document_id}.txt",
+                download_name=f"enhanced_document_{document_id}.docx",
             )
 
     except Exception as e:
