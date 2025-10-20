@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="w-16 h-16 flex items-center justify-center">
                 <img src="/favicon.ico" alt="Verolabz" className="w-12 h-12 object-contain" />
               </div>
-              <span class="text-2xl font-bold text-foreground">Verolabz</span>
+              <span className="text-2xl font-bold text-foreground">Verolabz</span>
             </Link>
             <p className="text-muted-foreground mb-4 max-w-md">
               AI-powered document enhancement for professionals, students, and freelancers. 
