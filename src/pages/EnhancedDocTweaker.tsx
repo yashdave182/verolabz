@@ -233,7 +233,7 @@ const EnhancedDocTweaker = () => {
     }
   };
 
-  const handleDownload = (format: 'txt' | 'docx' = 'txt') => {
+  const handleDownload = (format: 'txt' | 'docx' = 'docx') => {
     if (!enhancedText || !documentId) return;
 
     // For DOCX format, we need to use the backend service
@@ -588,6 +588,15 @@ const EnhancedDocTweaker = () => {
                       </Button>
                       <div className="flex gap-2">
                         <Button
+                          variant="default"
+                          size="sm"
+                          onClick={handleDownloadDocxClick}
+                          disabled={!enhancedText || !documentId}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download DOCX
+                        </Button>
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={handleDownloadTxtClick}
@@ -595,15 +604,6 @@ const EnhancedDocTweaker = () => {
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Download TXT
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleDownloadDocxClick}
-                          disabled={!enhancedText || !documentId}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download DOCX
                         </Button>
                       </div>
                     </div>

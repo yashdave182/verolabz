@@ -176,7 +176,7 @@ export const processDocument = async (
 /**
  * Download enhanced document
  */
-export const downloadDocument = async (documentId: string, format: 'txt' | 'docx' = 'txt'): Promise<Blob> => {
+export const downloadDocument = async (documentId: string, format: 'txt' | 'docx' = 'docx'): Promise<Blob> => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/download/${documentId}?format=${format}`, {
       method: "GET",
