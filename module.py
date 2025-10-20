@@ -5,6 +5,11 @@ from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 from collections import defaultdict
 
+# Import Word document libraries
+from docx import Document
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 # ============================================================================
 # DOCUMENT TWEAK - FORMAT TEMPLATE SYSTEM
 # ============================================================================
@@ -168,9 +173,9 @@ class TextFormatExtractor:
         """
         template = RichFormatTemplate()
         
-        # If we have OCR data, use it for better format extraction
-        if ocr_data and 'layout' in ocr_data:
-            return self._extract_from_ocr_data(text, ocr_data)
+        # If we have OCR data with line metadata, use it for better format extraction
+        if ocr_data and 'structured_data' in ocr_data and ocr_data['structured_data']:
+            return self._extract_from_line_metadata(text, ocr_data['structured_data'])
         
         # Fallback to pattern-based extraction
         lines = text.split('\n')
@@ -195,29 +200,32 @@ class TextFormatExtractor:
         
         return template
     
-    def _extract_from_ocr_data(self, text: str, ocr_data: Dict) -> RichFormatTemplate:
-        """Extract format from OCR data with layout information"""
+    def _extract_from_line_metadata(self, text: str, structured_data: Dict) -> RichFormatTemplate:
+        """Extract format from line metadata provided by Unstract"""
         template = RichFormatTemplate()
         
-        # Extract layout information
-        if 'layout' in ocr_data:
-            template.layout = ocr_data['layout']
+        # Store any available layout information
+        if 'line_metadata' in structured_data:
+            template.metadata['line_metadata'] = structured_data['line_metadata']
         
-        if 'metadata' in ocr_data:
-            template.metadata = ocr_data['metadata']
+        if 'highlights' in structured_data:
+            template.metadata['highlights'] = structured_data['highlights']
         
-        # Try to parse structured blocks from OCR data
-        if 'blocks' in ocr_data:
-            for i, block_data in enumerate(ocr_data['blocks']):
+        # Try to parse line metadata into rich format blocks
+        if 'line_metadata' in structured_data:
+            line_metadata = structured_data['line_metadata']
+            
+            # Process each line with its metadata
+            for i, line_info in enumerate(line_metadata.get('lines', [])):
                 try:
-                    block = self._create_rich_block_from_ocr(block_data, i)
+                    block = self._create_rich_block_from_line_metadata(line_info, i)
                     template.blocks.append(block)
                 except Exception as e:
-                    print(f"[Format] Warning: Could not parse OCR block {i}: {str(e)}")
-                    # Fallback to text-based extraction for this block
+                    print(f"[Format] Warning: Could not parse line metadata {i}: {str(e)}")
+                    # Continue with next line
                     continue
         else:
-            # Fallback to text-based extraction if no blocks data
+            # Fallback to text-based extraction if no line metadata
             lines = text.split('\n')
             for line_num, line in enumerate(lines):
                 if line.strip():
@@ -227,19 +235,23 @@ class TextFormatExtractor:
         
         return template
     
-    def _create_rich_block_from_ocr(self, block_data: Dict, index: int) -> RichFormatBlock:
-        """Create a RichFormatBlock from OCR block data"""
+    def _create_rich_block_from_line_metadata(self, line_info: Dict, index: int) -> RichFormatBlock:
+        """Create a RichFormatBlock from line metadata"""
         # Extract text
-        text = block_data.get('text', '')
+        text = line_info.get('text', '')
         
         # Extract position information
         position = PositionInfo()
-        if 'bounding_box' in block_data:
-            bbox = block_data['bounding_box']
+        if 'bbox' in line_info:
+            bbox = line_info['bbox']
             position.x = bbox.get('x', 0)
             position.y = bbox.get('y', 0)
             position.width = bbox.get('width', 0)
             position.height = bbox.get('height', 0)
+            position.page_number = bbox.get('page', 1)
+        
+        # Extract line number if available
+        line_number = line_info.get('line_number', index)
         
         # Extract formatting information
         block_format = BlockFormat(type=BlockType.PARAGRAPH)
@@ -252,45 +264,38 @@ class TextFormatExtractor:
             block_format.heading_level = level
             block_format.margin_top = 15
             block_format.margin_bottom = 10
-            
-            # Add character formatting for headings
-            char_formats.append(TextFormat(
-                start=0,
-                end=len(text),
-                bold=True,
-                font_size=24 - (level * 2)
-            ))
         elif self._is_list_item(text):
             block_format.type = BlockType.LIST_ITEM
             block_format.margin_left = 20
             block_format.list_style = "bullet"
         
         # Extract font information if available
-        if 'font' in block_data:
-            font_info = block_data['font']
-            if char_formats:
-                # Update existing character format
-                char_formats[0].font_family = font_info.get('name', 'Arial')
-                char_formats[0].font_size = font_info.get('size', 12)
-                char_formats[0].bold = font_info.get('bold', False)
-                char_formats[0].italic = font_info.get('italic', False)
-            else:
-                # Create new character format
-                char_formats.append(TextFormat(
-                    start=0,
-                    end=len(text),
-                    font_family=font_info.get('name', 'Arial'),
-                    font_size=font_info.get('size', 12),
-                    bold=font_info.get('bold', False),
-                    italic=font_info.get('italic', False)
-                ))
+        if 'font' in line_info:
+            font_info = line_info['font']
+            font_family = font_info.get('family', 'Arial')
+            font_size = font_info.get('size', 12)
+            is_bold = font_info.get('bold', False)
+            is_italic = font_info.get('italic', False)
+            
+            # Add character formatting
+            char_formats.append(TextFormat(
+                start=0,
+                end=len(text),
+                font_family=font_family,
+                font_size=font_size,
+                bold=is_bold,
+                italic=is_italic
+            ))
         
         return RichFormatBlock(
             text=text,
             block_format=block_format,
             char_formats=char_formats,
             position=position,
-            metadata=block_data.get('metadata', {})
+            metadata={
+                'line_number': line_number,
+                'source': 'line_metadata'
+            }
         )
     
     def _analyze_line_format(self, line: str, line_num: int = 0) -> RichFormatBlock:
@@ -617,3 +622,105 @@ class DocumentProcessor:
         formatted_result = self.applier.apply_format_semantic(enhanced_text, template)
         
         return formatted_result
+
+# ============================================================================
+# DOCX EXPORTER
+# ============================================================================
+
+class WordExporter:
+    """Exports RichFormatTemplate to Microsoft Word (.docx) with full formatting"""
+
+    def export(self, template: RichFormatTemplate, output_path: str) -> str:
+        """
+        Export formatted template to DOCX file
+        
+        Args:
+            template: RichFormatTemplate to export
+            output_path: Path where to save the DOCX file
+            
+        Returns:
+            Path to the exported file
+        """
+        doc = Document()
+
+        for block in template.blocks:
+            text = block.text.strip()
+            
+            # Skip completely empty blocks
+            if not text:
+                doc.add_paragraph("")
+                continue
+
+            block_format = block.block_format
+            para = None
+
+            # Handle different block types
+            if block_format.type == BlockType.HEADING:
+                # Add heading with appropriate level
+                level = block_format.heading_level or 1
+                level = max(1, min(level, 9))  # python-docx supports heading 1-9
+                para = doc.add_heading(text, level=level)
+
+            elif block_format.type == BlockType.LIST_ITEM:
+                # Add list item
+                para = doc.add_paragraph(text, style="List Bullet")
+                
+                # Apply indentation for nested lists
+                if block_format.indent_level > 0:
+                    para.paragraph_format.left_indent = Pt(block_format.indent_level * 20)
+
+            else:
+                # Add regular paragraph
+                para = doc.add_paragraph(text)
+
+            # Apply paragraph alignment
+            align_map = {
+                "left": WD_ALIGN_PARAGRAPH.LEFT,
+                "center": WD_ALIGN_PARAGRAPH.CENTER,
+                "right": WD_ALIGN_PARAGRAPH.RIGHT,
+                "justify": WD_ALIGN_PARAGRAPH.JUSTIFY,
+            }
+            if block_format.alignment in align_map:
+                para.alignment = align_map[block_format.alignment]
+
+            # Apply margins and spacing
+            if block_format.margin_top > 0:
+                para.paragraph_format.space_before = Pt(block_format.margin_top)
+            if block_format.margin_bottom > 0:
+                para.paragraph_format.space_after = Pt(block_format.margin_bottom)
+            if block_format.margin_left > 0:
+                para.paragraph_format.left_indent = Pt(block_format.margin_left)
+
+            # Apply line height
+            if block_format.line_height != 1.0:
+                para.paragraph_format.line_spacing = block_format.line_height
+
+            # Apply character formatting
+            if block.char_formats and para.runs:
+                # Apply formatting to the first run (simplified approach)
+                run = para.runs[0]
+                
+                # Use the first character format if available
+                if block.char_formats:
+                    fmt = block.char_formats[0]
+                    
+                    run.bold = fmt.bold
+                    run.italic = fmt.italic
+                    run.underline = fmt.underline
+                    run.font.name = fmt.font_family
+                    run.font.size = Pt(fmt.font_size)
+                    
+                    # Apply color if valid hex color
+                    if fmt.color.startswith("#") and len(fmt.color) == 7:
+                        try:
+                            r = int(fmt.color[1:3], 16)
+                            g = int(fmt.color[3:5], 16)
+                            b = int(fmt.color[5:7], 16)
+                            run.font.color.rgb = RGBColor(r, g, b)
+                        except ValueError:
+                            pass  # Skip invalid color
+
+        # Save the document
+        doc.save(output_path)
+        print(f"[WordExporter] Document saved to: {output_path}")
+        return output_path

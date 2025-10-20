@@ -18,13 +18,8 @@ import traceback
 # Import Gemini SDK
 import google.generativeai as genai
 
-# Import format processor
-from module import DocumentProcessor, RichFormatTemplate, TextFormatExtractor, FormatApplier
-
-# Import docx for Word document generation
-from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+# Import format processor with WordExporter
+from module import DocumentProcessor, RichFormatTemplate, TextFormatExtractor, FormatApplier, WordExporter
 
 app = Flask(__name__)
 # Enable CORS for React frontend - configure origins from environment variable
@@ -95,6 +90,7 @@ class UnstractOCRService:
 
             headers = {"unstract-key": self.api_key}
 
+            # Enhanced parameters for better layout preservation
             params = {
                 "mode": mode,
                 "output_mode": output_mode,
@@ -173,39 +169,38 @@ class UnstractOCRService:
 
             extracted_text = retrieve_response.text
 
-            # Step 4: Retrieve metadata and layout information
-            layout_data = {}
-            metadata = {}
+            # Step 4: Try to retrieve additional structured data for layout preservation
+            structured_data = {}
             
+            # Try to get line metadata (since we set add_line_nos=true)
             try:
-                # Try to get layout information
-                layout_url = f"{self.base_url}/whisper-layout"
-                layout_params = {"whisper_hash": whisper_hash}
+                line_metadata_url = f"{self.base_url}/whisper-line-metadata"
+                line_metadata_params = {"whisper_hash": whisper_hash}
                 
-                layout_response = requests.get(
-                    layout_url, headers=headers, params=layout_params, timeout=30
+                line_metadata_response = requests.get(
+                    line_metadata_url, headers=headers, params=line_metadata_params, timeout=30
                 )
                 
-                if layout_response.status_code == 200:
-                    layout_data = layout_response.json()
-                    print(f"[Unstract] Retrieved layout data")
+                if line_metadata_response.status_code == 200:
+                    structured_data["line_metadata"] = line_metadata_response.json()
+                    print(f"[Unstract] Retrieved line metadata")
             except Exception as e:
-                print(f"[Unstract] Warning: Could not retrieve layout data: {str(e)}")
+                print(f"[Unstract] Warning: Could not retrieve line metadata: {str(e)}")
             
+            # Try to get highlights data
             try:
-                # Try to get metadata
-                metadata_url = f"{self.base_url}/whisper-metadata"
-                metadata_params = {"whisper_hash": whisper_hash}
+                highlights_url = f"{self.base_url}/whisper-highlights"
+                highlights_params = {"whisper_hash": whisper_hash}
                 
-                metadata_response = requests.get(
-                    metadata_url, headers=headers, params=metadata_params, timeout=30
+                highlights_response = requests.get(
+                    highlights_url, headers=headers, params=highlights_params, timeout=30
                 )
                 
-                if metadata_response.status_code == 200:
-                    metadata = metadata_response.json()
-                    print(f"[Unstract] Retrieved metadata")
+                if highlights_response.status_code == 200:
+                    structured_data["highlights"] = highlights_response.json()
+                    print(f"[Unstract] Retrieved highlights data")
             except Exception as e:
-                print(f"[Unstract] Warning: Could not retrieve metadata: {str(e)}")
+                print(f"[Unstract] Warning: Could not retrieve highlights data: {str(e)}")
 
             print(f"[Unstract] Extraction complete. Text length: {len(extracted_text)}")
 
@@ -213,8 +208,7 @@ class UnstractOCRService:
                 "success": True,
                 "text": extracted_text,
                 "whisper_hash": whisper_hash,
-                "layout_data": layout_data,
-                "metadata": metadata
+                "structured_data": structured_data
             }
 
         except requests.exceptions.Timeout:
@@ -447,16 +441,21 @@ def upload_document():
         if not result["success"]:
             return jsonify(result), 500
 
-        return jsonify(
-            {
-                "success": True,
-                "document_id": document_id,
-                "text": result["text"],
-                "filename": file.filename,
-                "whisper_hash": result.get("whisper_hash"),
-                "method": "unstract_ocr",
-            }
-        )
+        # Return additional structured data for better format preservation
+        response_data = {
+            "success": True,
+            "document_id": document_id,
+            "text": result["text"],
+            "filename": file.filename,
+            "whisper_hash": result.get("whisper_hash"),
+            "method": "unstract_ocr",
+        }
+        
+        # Include structured data if available
+        if "structured_data" in result and result["structured_data"]:
+            response_data["structured_data"] = result["structured_data"]
+
+        return jsonify(response_data)
 
     except Exception as e:
         print(f"[Upload] Exception: {str(e)}")
@@ -596,11 +595,8 @@ def process_document():
                 return jsonify(ocr_result), 500
 
             original_text = ocr_result["text"]
-            # Extract layout and metadata data for enhanced format preservation
-            ocr_data = {
-                "layout": ocr_result.get("layout_data", {}),
-                "metadata": ocr_result.get("metadata", {})
-            }
+            # Extract structured data for enhanced format preservation
+            ocr_data = ocr_result.get("structured_data", {})
 
         print(f"[Process] Text extracted. Length: {len(original_text)}")
 
@@ -627,8 +623,8 @@ def process_document():
         enhanced_text = enhancement_result["text"]
 
         # Apply format with enhanced layout preservation
-        formatted_result = processor.applier.apply_format_semantic(
-            enhanced_text, original_template
+        formatted_result = processor.process_document(
+            original_text, enhanced_text, ocr_data
         )
 
         # Save results
@@ -656,73 +652,53 @@ def process_document():
 
 @app.route("/api/download/<document_id>", methods=["GET"])
 def download_document(document_id):
-    """Download enhanced document"""
+    """Download enhanced document in TXT or DOCX format"""
     try:
         result_path = PROCESSED_FOLDER / f"{document_id}_result.json"
 
         if not result_path.exists():
             return jsonify({"success": False, "error": "Document not found"}), 404
 
-        # Check if user wants DOCX format
-        format_type = request.args.get('format', 'txt')  # Default to txt for backward compatibility
+        # Check requested format (default: txt)
+        format_type = request.args.get('format', 'txt').lower()
 
         # Load format template
         template = RichFormatTemplate.load(str(result_path))
 
-        if format_type.lower() == 'docx':
-            # Generate DOCX file
-            doc = Document()
+        if format_type == 'docx':
+            # Generate DOCX file using WordExporter
+            print(f"[Download] Generating DOCX for document: {document_id}")
             
-            # Add content to document based on format template
-            for block in template.blocks:
-                # Determine block type and add appropriate content
-                if block.block_format.type.name == 'HEADING' and block.block_format.heading_level:
-                    # Add heading
-                    heading_level = min(block.block_format.heading_level, 6)  # python-docx supports heading 1-6
-                    heading = doc.add_heading(block.text, level=heading_level)
-                    
-                    # Apply character formatting if available
-                    if block.char_formats:
-                        for char_format in block.char_formats:
-                            # Basic formatting support
-                            if char_format.bold:
-                                heading.runs[0].bold = True
-                            if char_format.italic:
-                                heading.runs[0].italic = True
-                else:
-                    # Add paragraph
-                    paragraph = doc.add_paragraph(block.text)
-                    
-                    # Apply paragraph formatting
-                    if block.block_format.alignment == 'center':
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    elif block.block_format.alignment == 'right':
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                    elif block.block_format.alignment == 'justify':
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                    
-                    # Apply character formatting if available
-                    if block.char_formats:
-                        for char_format in block.char_formats:
-                            # Basic character formatting support
-                            if char_format.bold:
-                                paragraph.runs[0].bold = True
-                            if char_format.italic:
-                                paragraph.runs[0].italic = True
-
-            # Save to BytesIO buffer
-            buffer = BytesIO()
-            doc.save(buffer)
+            exporter = WordExporter()
+            
+            # Create temporary file path
+            docx_filename = f"enhanced_document_{document_id}.docx"
+            docx_path = PROCESSED_FOLDER / docx_filename
+            
+            # Export to DOCX
+            exporter.export(template, str(docx_path))
+            
+            # Read file into BytesIO buffer
+            with open(docx_path, 'rb') as f:
+                buffer = BytesIO(f.read())
             buffer.seek(0)
+            
+            # Clean up temporary file
+            try:
+                docx_path.unlink()
+            except:
+                pass
 
             return send_file(
                 buffer,
                 mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 as_attachment=True,
-                download_name=f"enhanced_document_{document_id}.docx",
+                download_name=docx_filename,
             )
         else:
             # Original TXT format
+            print(f"[Download] Generating TXT for document: {document_id}")
+            
             # Convert to plain text
             text_output = []
             for block in template.blocks:
@@ -744,6 +720,7 @@ def download_document(document_id):
 
     except Exception as e:
         print(f"[Download] Exception: {str(e)}")
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 
