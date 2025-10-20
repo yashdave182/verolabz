@@ -19,7 +19,7 @@ import traceback
 import google.generativeai as genai
 
 # Import format processor
-from module import DocumentProcessor, FormatTemplate, TextFormatExtractor, FormatApplier
+from module import DocumentProcessor, RichFormatTemplate, TextFormatExtractor, FormatApplier
 
 # Import docx for Word document generation
 from docx import Document
@@ -83,7 +83,7 @@ class UnstractOCRService:
             output_mode: Output mode (layout_preserving, text)
 
         Returns:
-            dict with status, whisper_hash, and extracted text
+            dict with status, whisper_hash, extracted text, and structured data
         """
         try:
             print(f"[Unstract] Starting extraction for: {file_path}")
@@ -173,12 +173,48 @@ class UnstractOCRService:
 
             extracted_text = retrieve_response.text
 
+            # Step 4: Retrieve metadata and layout information
+            layout_data = {}
+            metadata = {}
+            
+            try:
+                # Try to get layout information
+                layout_url = f"{self.base_url}/whisper-layout"
+                layout_params = {"whisper_hash": whisper_hash}
+                
+                layout_response = requests.get(
+                    layout_url, headers=headers, params=layout_params, timeout=30
+                )
+                
+                if layout_response.status_code == 200:
+                    layout_data = layout_response.json()
+                    print(f"[Unstract] Retrieved layout data")
+            except Exception as e:
+                print(f"[Unstract] Warning: Could not retrieve layout data: {str(e)}")
+            
+            try:
+                # Try to get metadata
+                metadata_url = f"{self.base_url}/whisper-metadata"
+                metadata_params = {"whisper_hash": whisper_hash}
+                
+                metadata_response = requests.get(
+                    metadata_url, headers=headers, params=metadata_params, timeout=30
+                )
+                
+                if metadata_response.status_code == 200:
+                    metadata = metadata_response.json()
+                    print(f"[Unstract] Retrieved metadata")
+            except Exception as e:
+                print(f"[Unstract] Warning: Could not retrieve metadata: {str(e)}")
+
             print(f"[Unstract] Extraction complete. Text length: {len(extracted_text)}")
 
             return {
                 "success": True,
                 "text": extracted_text,
                 "whisper_hash": whisper_hash,
+                "layout_data": layout_data,
+                "metadata": metadata
             }
 
         except requests.exceptions.Timeout:
@@ -453,11 +489,6 @@ def enhance_document():
                 {"success": False, "error": "Gemini API key not configured"}
             ), 500
 
-        # Log input details for performance monitoring
-        print(f"[Enhance] Processing document of length: {len(original_text)}")
-        print(f"[Enhance] Context: {context}")
-        print(f"[Enhance] Preserve format: {preserve_format}")
-
         # Extract format template from original text
         print("[Format] Extracting format template...")
         format_start = time.time()
@@ -491,7 +522,7 @@ def enhance_document():
         # Apply format template to enhanced text
         print("[Format] Applying format template to enhanced text...")
         apply_start = time.time()
-        formatted_result = processor.applier.apply_format_smart(
+        formatted_result = processor.applier.apply_format_semantic(
             enhanced_text, original_template
         )
         apply_time = time.time() - apply_start
@@ -500,9 +531,6 @@ def enhance_document():
         # Save formatted result
         result_path = PROCESSED_FOLDER / f"{template_id}_result.json"
         formatted_result.save(str(result_path))
-
-        total_time = time.time() - start_time
-        print(f"[Enhance] Total processing time: {total_time:.2f} seconds")
 
         return jsonify(
             {
@@ -514,7 +542,7 @@ def enhance_document():
                     "format_extraction": format_time,
                     "gemini_enhancement": gemini_time,
                     "format_application": apply_time,
-                    "total": total_time
+                    "total": time.time() - start_time
                 }
             }
         )
@@ -550,7 +578,8 @@ def process_document():
         file_path = UPLOAD_FOLDER / filename
         file.save(file_path)
 
-        # Extract text
+        # Extract text and layout data
+        ocr_data = None
         if file_ext == ".txt":
             with open(file_path, "r", encoding="utf-8") as f:
                 original_text = f.read()
@@ -567,13 +596,18 @@ def process_document():
                 return jsonify(ocr_result), 500
 
             original_text = ocr_result["text"]
+            # Extract layout and metadata data for enhanced format preservation
+            ocr_data = {
+                "layout": ocr_result.get("layout_data", {}),
+                "metadata": ocr_result.get("metadata", {})
+            }
 
         print(f"[Process] Text extracted. Length: {len(original_text)}")
 
-        # Extract format template
+        # Extract format template with rich layout information
         processor = DocumentProcessor()
         original_template = processor.extractor.extract_from_text_patterns(
-            original_text
+            original_text, ocr_data
         )
 
         # Enhance with Gemini
@@ -592,8 +626,8 @@ def process_document():
 
         enhanced_text = enhancement_result["text"]
 
-        # Apply format
-        formatted_result = processor.applier.apply_format_smart(
+        # Apply format with enhanced layout preservation
+        formatted_result = processor.applier.apply_format_semantic(
             enhanced_text, original_template
         )
 
@@ -633,7 +667,7 @@ def download_document(document_id):
         format_type = request.args.get('format', 'txt')  # Default to txt for backward compatibility
 
         # Load format template
-        template = FormatTemplate.load(str(result_path))
+        template = RichFormatTemplate.load(str(result_path))
 
         if format_type.lower() == 'docx':
             # Generate DOCX file

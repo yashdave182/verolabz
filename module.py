@@ -28,6 +28,8 @@ class BlockType(Enum):
     PARAGRAPH = "paragraph"
     LIST_ITEM = "list_item"
     TABLE_CELL = "table_cell"
+    CODE = "code"
+    QUOTE = "quote"
 
 @dataclass
 class TextFormat:
@@ -72,17 +74,37 @@ class BlockFormat:
         return cls(**data)
 
 @dataclass
-class FormattedBlock:
-    """A block of text with its formatting"""
+class PositionInfo:
+    """Position information for layout preservation"""
+    x: float = 0.0
+    y: float = 0.0
+    width: float = 0.0
+    height: float = 0.0
+    page_number: int = 1
+    
+    def to_dict(self):
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**data)
+
+@dataclass
+class RichFormatBlock:
+    """A block of text with rich formatting and layout information"""
     text: str
     block_format: BlockFormat
     char_formats: List[TextFormat] = field(default_factory=list)
+    position: PositionInfo = field(default_factory=PositionInfo)
+    metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self):
         return {
             'text': self.text,
             'block_format': self.block_format.to_dict(),
-            'char_formats': [cf.to_dict() for cf in self.char_formats]
+            'char_formats': [cf.to_dict() for cf in self.char_formats],
+            'position': self.position.to_dict(),
+            'metadata': self.metadata
         }
     
     @classmethod
@@ -90,25 +112,30 @@ class FormattedBlock:
         return cls(
             text=data['text'],
             block_format=BlockFormat.from_dict(data['block_format']),
-            char_formats=[TextFormat.from_dict(cf) for cf in data['char_formats']]
+            char_formats=[TextFormat.from_dict(cf) for cf in data['char_formats']],
+            position=PositionInfo.from_dict(data.get('position', {})),
+            metadata=data.get('metadata', {})
         )
 
 @dataclass
-class FormatTemplate:
-    """Complete format template extracted from document"""
-    blocks: List[FormattedBlock] = field(default_factory=list)
+class RichFormatTemplate:
+    """Complete format template with rich layout information"""
+    blocks: List[RichFormatBlock] = field(default_factory=list)
+    layout: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self):
         return {
             'blocks': [block.to_dict() for block in self.blocks],
+            'layout': self.layout,
             'metadata': self.metadata
         }
     
     @classmethod
     def from_dict(cls, data):
         return cls(
-            blocks=[FormattedBlock.from_dict(b) for b in data['blocks']],
+            blocks=[RichFormatBlock.from_dict(b) for b in data['blocks']],
+            layout=data.get('layout', {}),
             metadata=data.get('metadata', {})
         )
     
@@ -125,43 +152,154 @@ class FormatTemplate:
         return cls.from_dict(data)
 
 # ============================================================================
-# FORMAT EXTRACTOR (From plain text)
+# FORMAT EXTRACTOR (From plain text and OCR data)
 # ============================================================================
 
 class TextFormatExtractor:
-    """Extract formatting from plain text"""
+    """Extract formatting from plain text and OCR data"""
     
-    def extract_from_text_patterns(self, text: str) -> FormatTemplate:
+    def extract_from_text_patterns(self, text: str, ocr_data: Optional[Dict] = None) -> RichFormatTemplate:
         """
-        Extract format by analyzing text patterns
+        Extract format by analyzing text patterns and OCR data if available
+        
+        Args:
+            text: The extracted text
+            ocr_data: Optional OCR data with layout information
         """
-        template = FormatTemplate()
+        template = RichFormatTemplate()
+        
+        # If we have OCR data, use it for better format extraction
+        if ocr_data and 'layout' in ocr_data:
+            return self._extract_from_ocr_data(text, ocr_data)
+        
+        # Fallback to pattern-based extraction
         lines = text.split('\n')
         
         for line_num, line in enumerate(lines):
             if not line.strip():
                 # Preserve empty lines
-                template.blocks.append(FormattedBlock(
+                template.blocks.append(RichFormatBlock(
                     text="",
                     block_format=BlockFormat(
                         type=BlockType.PARAGRAPH,
                         margin_bottom=10
-                    )
+                    ),
+                    position=PositionInfo(y=line_num * 20)  # Approximate positioning
                 ))
                 continue
             
             block = self._analyze_line_format(line, line_num)
+            # Add position information
+            block.position = PositionInfo(y=line_num * 20)
             template.blocks.append(block)
         
         return template
     
-    def _analyze_line_format(self, line: str, line_num: int = 0) -> FormattedBlock:
+    def _extract_from_ocr_data(self, text: str, ocr_data: Dict) -> RichFormatTemplate:
+        """Extract format from OCR data with layout information"""
+        template = RichFormatTemplate()
+        
+        # Extract layout information
+        if 'layout' in ocr_data:
+            template.layout = ocr_data['layout']
+        
+        if 'metadata' in ocr_data:
+            template.metadata = ocr_data['metadata']
+        
+        # Try to parse structured blocks from OCR data
+        if 'blocks' in ocr_data:
+            for i, block_data in enumerate(ocr_data['blocks']):
+                try:
+                    block = self._create_rich_block_from_ocr(block_data, i)
+                    template.blocks.append(block)
+                except Exception as e:
+                    print(f"[Format] Warning: Could not parse OCR block {i}: {str(e)}")
+                    # Fallback to text-based extraction for this block
+                    continue
+        else:
+            # Fallback to text-based extraction if no blocks data
+            lines = text.split('\n')
+            for line_num, line in enumerate(lines):
+                if line.strip():
+                    block = self._analyze_line_format(line, line_num)
+                    block.position = PositionInfo(y=line_num * 20)
+                    template.blocks.append(block)
+        
+        return template
+    
+    def _create_rich_block_from_ocr(self, block_data: Dict, index: int) -> RichFormatBlock:
+        """Create a RichFormatBlock from OCR block data"""
+        # Extract text
+        text = block_data.get('text', '')
+        
+        # Extract position information
+        position = PositionInfo()
+        if 'bounding_box' in block_data:
+            bbox = block_data['bounding_box']
+            position.x = bbox.get('x', 0)
+            position.y = bbox.get('y', 0)
+            position.width = bbox.get('width', 0)
+            position.height = bbox.get('height', 0)
+        
+        # Extract formatting information
+        block_format = BlockFormat(type=BlockType.PARAGRAPH)
+        char_formats = []
+        
+        # Determine block type based on content and formatting
+        if self._is_heading(text):
+            level = self._get_heading_level(text)
+            block_format.type = BlockType.HEADING
+            block_format.heading_level = level
+            block_format.margin_top = 15
+            block_format.margin_bottom = 10
+            
+            # Add character formatting for headings
+            char_formats.append(TextFormat(
+                start=0,
+                end=len(text),
+                bold=True,
+                font_size=24 - (level * 2)
+            ))
+        elif self._is_list_item(text):
+            block_format.type = BlockType.LIST_ITEM
+            block_format.margin_left = 20
+            block_format.list_style = "bullet"
+        
+        # Extract font information if available
+        if 'font' in block_data:
+            font_info = block_data['font']
+            if char_formats:
+                # Update existing character format
+                char_formats[0].font_family = font_info.get('name', 'Arial')
+                char_formats[0].font_size = font_info.get('size', 12)
+                char_formats[0].bold = font_info.get('bold', False)
+                char_formats[0].italic = font_info.get('italic', False)
+            else:
+                # Create new character format
+                char_formats.append(TextFormat(
+                    start=0,
+                    end=len(text),
+                    font_family=font_info.get('name', 'Arial'),
+                    font_size=font_info.get('size', 12),
+                    bold=font_info.get('bold', False),
+                    italic=font_info.get('italic', False)
+                ))
+        
+        return RichFormatBlock(
+            text=text,
+            block_format=block_format,
+            char_formats=char_formats,
+            position=position,
+            metadata=block_data.get('metadata', {})
+        )
+    
+    def _analyze_line_format(self, line: str, line_num: int = 0) -> RichFormatBlock:
         """Analyze a line and guess its formatting"""
         
         # Check if it's a heading
         if self._is_heading(line):
             level = self._get_heading_level(line)
-            return FormattedBlock(
+            return RichFormatBlock(
                 text=line.strip(),
                 block_format=BlockFormat(
                     type=BlockType.HEADING,
@@ -179,7 +317,7 @@ class TextFormatExtractor:
         
         # Check if it's a list item
         if self._is_list_item(line):
-            return FormattedBlock(
+            return RichFormatBlock(
                 text=line.strip(),
                 block_format=BlockFormat(
                     type=BlockType.LIST_ITEM,
@@ -191,7 +329,7 @@ class TextFormatExtractor:
         # Check for special markers
         if "<<<PAGE_BREAK>>>" in line:
             # Handle page breaks
-            return FormattedBlock(
+            return RichFormatBlock(
                 text=line.strip(),
                 block_format=BlockFormat(
                     type=BlockType.PARAGRAPH,
@@ -200,7 +338,7 @@ class TextFormatExtractor:
             )
         
         # Default: paragraph
-        return FormattedBlock(
+        return RichFormatBlock(
             text=line.strip(),
             block_format=BlockFormat(
                 type=BlockType.PARAGRAPH,
@@ -255,12 +393,15 @@ class TextFormatExtractor:
 class FormatApplier:
     """Apply formatting template to new text from LLM"""
     
-    def apply_format(self, new_text: str, template: FormatTemplate) -> FormatTemplate:
+    def apply_format(self, new_text: str, template: RichFormatTemplate) -> RichFormatTemplate:
         """
         Apply the formatting from template to new text
         Maps new text to old formatting structure
         """
-        new_template = FormatTemplate(metadata=template.metadata.copy())
+        new_template = RichFormatTemplate(
+            layout=template.layout.copy(),
+            metadata=template.metadata.copy()
+        )
         
         # Split new text into blocks (paragraphs)
         new_blocks = self._split_into_blocks(new_text)
@@ -278,7 +419,7 @@ class FormatApplier:
                 else:
                     last_format = BlockFormat(type=BlockType.PARAGRAPH)
                 
-                new_block = FormattedBlock(
+                new_block = RichFormatBlock(
                     text=new_block_text,
                     block_format=last_format
                 )
@@ -287,38 +428,25 @@ class FormatApplier:
         
         return new_template
     
-    def apply_format_smart(self, new_text: str, template: FormatTemplate) -> FormatTemplate:
+    def apply_format_semantic(self, new_text: str, template: RichFormatTemplate) -> RichFormatTemplate:
         """
-        Smart format application - tries to match semantic structure
-        Better for when LLM changes content structure
+        Apply format using semantic matching - better for when LLM changes content structure
         """
-        new_template = FormatTemplate(metadata=template.metadata.copy())
+        new_template = RichFormatTemplate(
+            layout=template.layout.copy(),
+            metadata=template.metadata.copy()
+        )
         
-        # Split new text into blocks preserving line structure
-        new_lines = new_text.split('\n')
-        template_lines = []
-        for block in template.blocks:
-            template_lines.append(block.text)
+        # Parse new text into semantic blocks
+        new_blocks = self._parse_semantic_blocks(new_text)
         
-        # Map new lines to template preserving structure
-        for i, new_line in enumerate(new_lines):
-            if i < len(template.blocks):
-                # Use existing format
-                old_block = template.blocks[i]
-                new_block = self._apply_block_format(new_line, old_block)
-            else:
-                # Create new block with default format from last block
-                if template.blocks:
-                    last_format = template.blocks[-1].block_format
-                else:
-                    last_format = BlockFormat(type=BlockType.PARAGRAPH)
-                
-                new_block = FormattedBlock(
-                    text=new_line,
-                    block_format=last_format
-                )
-            
-            new_template.blocks.append(new_block)
+        # Match new blocks to template using semantic analysis
+        matched_blocks = self._match_semantic_blocks(new_blocks, template.blocks)
+        
+        # Apply formatting
+        for new_block, template_block in matched_blocks:
+            formatted_block = self._apply_block_format(new_block.text, template_block)
+            new_template.blocks.append(formatted_block)
         
         return new_template
     
@@ -342,11 +470,50 @@ class FormatApplier:
         
         return blocks
     
-    def _apply_block_format(self, text: str, old_block: FormattedBlock) -> FormattedBlock:
+    def _parse_semantic_blocks(self, text: str) -> List[RichFormatBlock]:
+        """Parse text into semantic blocks with guessed formatting"""
+        lines = text.split('\n')
+        blocks = []
+        
+        extractor = TextFormatExtractor()
+        for line_num, line in enumerate(lines):
+            if line.strip():
+                block = extractor._analyze_line_format(line, line_num)
+                block.position = PositionInfo(y=line_num * 20)
+                blocks.append(block)
+        
+        return blocks
+    
+    def _match_semantic_blocks(self, new_blocks: List[RichFormatBlock], template_blocks: List[RichFormatBlock]) -> List[Tuple[RichFormatBlock, RichFormatBlock]]:
+        """Match new blocks to template blocks using semantic analysis"""
+        matches = []
+        
+        # Simple matching: preserve order but allow content changes
+        for i, new_block in enumerate(new_blocks):
+            if i < len(template_blocks):
+                # Match by position in document
+                matches.append((new_block, template_blocks[i]))
+            else:
+                # Use last template block format as fallback
+                if template_blocks:
+                    matches.append((new_block, template_blocks[-1]))
+                else:
+                    # Create default format
+                    default_block = RichFormatBlock(
+                        text=new_block.text,
+                        block_format=BlockFormat(type=BlockType.PARAGRAPH)
+                    )
+                    matches.append((new_block, default_block))
+        
+        return matches
+    
+    def _apply_block_format(self, text: str, old_block: RichFormatBlock) -> RichFormatBlock:
         """Apply old block's format to new text"""
-        new_block = FormattedBlock(
+        new_block = RichFormatBlock(
             text=text,
-            block_format=old_block.block_format
+            block_format=old_block.block_format,
+            position=old_block.position,  # Preserve position
+            metadata=old_block.metadata.copy()
         )
         
         # Map character formats proportionally
@@ -376,7 +543,7 @@ class FormatApplier:
         
         return new_block
     
-    def _analyze_structure(self, template: FormatTemplate) -> Dict[str, int]:
+    def _analyze_structure(self, template: RichFormatTemplate) -> Dict[str, int]:
         """Analyze document structure"""
         structure = defaultdict(int)
         
@@ -411,14 +578,14 @@ class FormatApplier:
         # Default: paragraph
         return BlockType.PARAGRAPH
     
-    def _find_matching_format(self, block_type: BlockType, template: FormatTemplate) -> FormattedBlock:
+    def _find_matching_format(self, block_type: BlockType, template: RichFormatTemplate) -> RichFormatBlock:
         """Find a matching format from template"""
         for block in template.blocks:
             if block.block_format.type == block_type:
                 return block
         
         # Default: paragraph
-        return FormattedBlock(
+        return RichFormatBlock(
             text="",
             block_format=BlockFormat(type=BlockType.PARAGRAPH)
         )
@@ -434,14 +601,19 @@ class DocumentProcessor:
         self.extractor = TextFormatExtractor()
         self.applier = FormatApplier()
     
-    def process_document(self, original_text: str, enhanced_text: str) -> FormatTemplate:
+    def process_document(self, original_text: str, enhanced_text: str, ocr_data: Optional[Dict] = None) -> RichFormatTemplate:
         """
         Process document: extract format from original, apply to enhanced text
-        """
-        # Extract format from original text
-        template = self.extractor.extract_from_text_patterns(original_text)
         
-        # Apply format to enhanced text
-        formatted_result = self.applier.apply_format(enhanced_text, template)
+        Args:
+            original_text: Original document text
+            enhanced_text: AI-enhanced text
+            ocr_data: Optional OCR data with layout information
+        """
+        # Extract format from original text (with OCR data if available)
+        template = self.extractor.extract_from_text_patterns(original_text, ocr_data)
+        
+        # Apply format to enhanced text using semantic matching
+        formatted_result = self.applier.apply_format_semantic(enhanced_text, template)
         
         return formatted_result
