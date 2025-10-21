@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Twitter, Linkedin, Github, Mail, Instagram } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   return (
@@ -11,7 +12,7 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
               <div className="w-16 h-16 flex items-center justify-center">
-                <img src="/favicon.ico" alt="Verolabz" className="w-12 h-12 object-contain" />
+                <Logo size="md" />
               </div>
               <span className="text-2xl font-bold text-foreground">Verolabz</span>
             </Link>
