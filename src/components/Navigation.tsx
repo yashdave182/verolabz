@@ -13,7 +13,7 @@ const Navigation = () => {
     { href: "/doc-tweaker", label: "Document Enhancer" },
     { href: "/community", label: "Community" },
     { href: "/how-it-works", label: "How It Works" },
-    { href: "/contact", label: "Contact" }
+    { href: "/contact", label: "Contact" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -37,17 +37,17 @@ const Navigation = () => {
                 key={link.href}
                 to={link.href}
                 className={`text-sm font-medium transition-smooth hover:text-primary ${
-                  isActive(link.href) 
-                    ? "text-primary border-b-2 border-primary" 
+                  isActive(link.href)
+                    ? "text-primary border-b-2 border-primary"
                     : "text-muted-foreground"
                 }`}
               >
                 {link.label}
               </Link>
             ))}
-            
+
             <Button variant="hero" size="sm" asChild>
-              <Link to="/doc-tweaker">Get Started</Link>
+              <Link to="/auth">Get Started</Link>
             </Button>
           </div>
 
@@ -58,7 +58,11 @@ const Navigation = () => {
               size="sm"
               onClick={() => setIsOpen(!isOpen)}
             >
-              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -83,7 +87,7 @@ const Navigation = () => {
               ))}
               <div className="px-3 py-2">
                 <Button variant="hero" size="sm" className="w-full" asChild>
-                  <Link to="/doc-tweaker">Get Started</Link>
+                  <Link to="/auth">Get Started</Link>
                 </Button>
               </div>
             </div>

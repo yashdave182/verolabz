@@ -12,6 +12,9 @@ import Community from "./pages/Community";
 import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import { AuthProvider, ProtectedRoute } from "./lib/AuthContext";
+import Auth from "./pages/Auth";
+import AuthComplete from "./pages/AuthComplete";
 
 const queryClient = new QueryClient();
 
@@ -20,31 +23,49 @@ const App = () => {
   try {
     return (
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen flex flex-col">
-              <Navigation />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/doc-tweaker" element={<DocTweaker />} />
-                  <Route
-                    path="/enhanced-doc-tweaker"
-                    element={<EnhancedDocTweaker />}
-                  />
-                  <Route path="/community" element={<Community />} />
-                  <Route path="/how-it-works" element={<HowItWorks />} />
-                  <Route path="/contact" element={<Contact />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="min-h-screen flex flex-col">
+                <Navigation />
+                <main className="flex-1">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route
+                      path="/doc-tweaker"
+                      element={
+                        <ProtectedRoute>
+                          <DocTweaker />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/enhanced-doc-tweaker"
+                      element={
+                        <ProtectedRoute>
+                          <EnhancedDocTweaker />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/complete" element={<AuthComplete />} />
+                    <Route path="/community" element={<Community />} />
+
+                    <Route path="/how-it-works" element={<HowItWorks />} />
+                    <Route path="/contact" element={<Contact />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+                <Footer />
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
       </QueryClientProvider>
     );
   } catch (error) {
