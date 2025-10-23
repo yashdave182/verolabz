@@ -229,7 +229,7 @@ export default function FeedbackDialog(props: FeedbackDialogProps) {
           <DialogDescription>
             Tell us how your{" "}
             {context?.action === "download" ? "download" : "preview"} went so we
-            can improve DocTweaker.
+            can improve Verolabz.
           </DialogDescription>
         </DialogHeader>
 
