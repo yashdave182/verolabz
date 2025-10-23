@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { useAuth } from "@/lib/AuthContext";
+import FeedbackDialog from "@/components/FeedbackDialog";
 
 const DocTweaker = () => {
   // Text workflows
@@ -45,8 +46,12 @@ const DocTweaker = () => {
   const [docxFile, setDocxFile] = useState<File | null>(null);
   const [enhancedDocxBlob, setEnhancedDocxBlob] = useState<Blob | null>(null);
 
-  // Preview
+  // Preview and Feedback
   const [showPreview, setShowPreview] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackAction, setFeedbackAction] = useState<
+    "preview" | "download" | null
+  >(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -228,6 +233,10 @@ const DocTweaker = () => {
         title: "Downloaded",
         description: "Enhanced document has been downloaded.",
       });
+
+      // Trigger feedback after download
+      setFeedbackAction("download");
+      setFeedbackOpen(true);
     } catch (error) {
       console.error("Download error:", error);
       toast({
@@ -279,7 +288,6 @@ const DocTweaker = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Preview moved below the Enhance button */}
-
           <Card className="shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Document Enhancer</CardTitle>
@@ -431,7 +439,12 @@ const DocTweaker = () => {
                   <DocumentPreview
                     fileBlob={enhancedDocxBlob}
                     fileName={uploadedFileName || "enhanced_document.docx"}
-                    onClose={() => setShowPreview(false)}
+                    onClose={() => {
+                      setShowPreview(false);
+                      // Trigger feedback when closing preview
+                      setFeedbackAction("preview");
+                      setFeedbackOpen(true);
+                    }}
                     onDownload={downloadEnhancedDocx}
                   />
                 </div>
@@ -453,7 +466,19 @@ const DocTweaker = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
                       variant="outline"
-                      onClick={() => setShowPreview((s) => !s)}
+                      onClick={() =>
+                        setShowPreview((s) => {
+                          const next = !s;
+
+                          // Only show feedback when closing preview
+                          if (!next) {
+                            setFeedbackAction("preview");
+
+                            setFeedbackOpen(true);
+                          }
+                          return next;
+                        })
+                      }
                       className="w-full"
                     >
                       <Eye className="w-4 h-4 mr-2" />
@@ -507,6 +532,9 @@ const DocTweaker = () => {
                         a.click();
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
+                        // Prompt feedback after download for text case
+                        setFeedbackAction("download");
+                        setFeedbackOpen(true);
                       }}
                     >
                       <Download className="w-4 h-4 mr-2" />
@@ -528,6 +556,17 @@ const DocTweaker = () => {
           </Card>
         </div>
       </section>
+
+      <FeedbackDialog
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+        context={{
+          fileName:
+            uploadedFileName ||
+            (docxFile ? "enhanced_document.docx" : "enhanced-document.txt"),
+          action: feedbackAction ?? undefined,
+        }}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { useAuth } from "@/lib/AuthContext";
+import FeedbackDialog from "@/components/FeedbackDialog";
 
 type ProcessingStage =
   | "idle"
@@ -37,7 +38,7 @@ type ProcessingStage =
   | "error";
 
 const EnhancedDocTweaker = () => {
-  // Hooks must be declared first and unconditionally
+  // Hooks must be declared top-level and unconditionally
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -55,13 +56,17 @@ const EnhancedDocTweaker = () => {
   const [uploadedFileName, setUploadedFileName] = useState<string>("");
   const [enhancedFileBlob, setEnhancedFileBlob] = useState<Blob | null>(null);
 
-  // Preview
+  // Preview + Feedback state
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [feedbackOpen, setFeedbackOpen] = useState<boolean>(false);
+  const [feedbackAction, setFeedbackAction] = useState<
+    "preview" | "download" | null
+  >(null);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auth guard: after hooks are declared, we can early return a redirect
+  // Auth guard
   if (!isAuthenticated) {
     return (
       <Navigate
@@ -72,10 +77,11 @@ const EnhancedDocTweaker = () => {
     );
   }
 
+  // removed auto-feedback scheduling on preview open
+
   const updateProgress = (stage: ProcessingStage, message = "") => {
     setProcessingStage(stage);
     setProcessingMessage(message);
-
     const progressMap: Record<ProcessingStage, number> = {
       idle: 0,
       uploading: 30,
@@ -91,6 +97,7 @@ const EnhancedDocTweaker = () => {
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
     setUploadedFileName(file.name);
     setError("");
   };
@@ -225,7 +232,9 @@ const EnhancedDocTweaker = () => {
         title: "Downloaded",
         description: "Enhanced document has been downloaded.",
       });
-    } catch (err) {
+      setFeedbackAction("download");
+      setFeedbackOpen(true);
+    } catch {
       toast({
         title: "Download Failed",
         description:
@@ -442,7 +451,13 @@ const EnhancedDocTweaker = () => {
                     <DocumentPreview
                       fileBlob={enhancedFileBlob}
                       fileName={uploadedFileName || "enhanced_document.docx"}
-                      onClose={() => setShowPreview(false)}
+                      onClose={() => {
+                        setShowPreview(false);
+
+                        // Show feedback when closing preview
+                        setFeedbackAction("preview");
+                        setFeedbackOpen(true);
+                      }}
                       onDownload={handleDownload}
                     />
                   </div>
@@ -460,7 +475,17 @@ const EnhancedDocTweaker = () => {
                     <Button
                       variant="outline"
                       size="lg"
-                      onClick={() => setShowPreview(!showPreview)}
+                      onClick={() => {
+                        const next = !showPreview;
+
+                        // Only show feedback when closing preview
+                        if (!next) {
+                          setFeedbackAction("preview");
+
+                          setFeedbackOpen(true);
+                        }
+                        setShowPreview(next);
+                      }}
                       className="w-full"
                     >
                       <Eye className="w-4 h-4 mr-2" />
@@ -549,6 +574,16 @@ const EnhancedDocTweaker = () => {
           </Card>
         </div>
       </section>
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+        context={{
+          fileName: uploadedFileName || "enhanced_document.docx",
+          action: feedbackAction ?? undefined,
+        }}
+      />
     </div>
   );
 };
