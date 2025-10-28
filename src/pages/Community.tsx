@@ -1,45 +1,57 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Users, 
-  MessageCircle, 
-  Lightbulb, 
-  Rocket, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Users,
+  MessageCircle,
+  Lightbulb,
+  Rocket,
   ExternalLink,
   Slack,
   UserPlus,
   Calendar,
   Trophy,
-  Coffee
+  Coffee,
 } from "lucide-react";
 
 const Community = () => {
-  const handleJoinSlack = () => {
-    // Replace this with your actual Slack community URL
-    window.open("https://join.slack.com/t/your-slack-community/shared_invite/xxxxxxxx", "_blank");
+  const handleJoinWhatsApp = () => {
+    window.open(
+      "https://chat.whatsapp.com/HxcMDuaUtRtFqG4GUxToJX?mode=wwt",
+      "_blank",
+    );
   };
 
   const communityBenefits = [
     {
       icon: Users,
       title: "Connect with Peers",
-      description: "Network with other document creators, professionals, and enthusiasts."
+      description:
+        "Network with other document creators, professionals, and enthusiasts.",
     },
     {
       icon: MessageCircle,
       title: "Real-time Support",
-      description: "Get instant help from our community members and support team."
+      description:
+        "Get instant help from our community members and support team.",
     },
     {
       icon: Lightbulb,
       title: "Share Ideas",
-      description: "Exchange tips, tricks, and innovative ways to use Verolabz."
+      description:
+        "Exchange tips, tricks, and innovative ways to use Verolabz.",
     },
     {
       icon: Trophy,
       title: "Exclusive Resources",
-      description: "Access member-only templates, guides, and early feature previews."
-    }
+      description:
+        "Access member-only templates, guides, and early feature previews.",
+    },
   ];
 
   const communityGuidelines = [
@@ -47,7 +59,7 @@ const Community = () => {
     "Share knowledge and help others when possible",
     "Keep discussions relevant to document creation and Verolabz",
     "No self-promotion or spamming",
-    "Report any inappropriate behavior to moderators"
+    "Report any inappropriate behavior to moderators",
   ];
 
   return (
@@ -64,16 +76,18 @@ const Community = () => {
             <span className="block text-primary">Community</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect with fellow document creators, get expert advice, and be part of a growing community 
-            passionate about perfecting documents with AI.
+            Connect with fellow document creators, get expert advice, and be
+            part of a growing community passionate about perfecting documents
+            with AI.
           </p>
-          <Button 
-            onClick={handleJoinSlack}
-            size="lg" 
+
+          <Button
+            onClick={handleJoinWhatsApp}
+            size="lg"
             className="font-semibold group"
           >
-            <Slack className="w-5 h-5 mr-2" />
-            Join Our Slack Community
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Join Our WhatsApp Community
             <ExternalLink className="w-4 h-4 ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </Button>
         </div>
@@ -82,7 +96,9 @@ const Community = () => {
       {/* Community Benefits */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Join Our Community?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Why Join Our Community?
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {communityBenefits.map((benefit, index) => (
               <Card key={index} className="hover-lift border-primary/20">
@@ -109,10 +125,11 @@ const Community = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Community Features</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our Slack community offers exclusive channels and resources to help you get the most out of Verolabz
+              Our Slack community offers exclusive channels and resources to
+              help you get the most out of Verolabz
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
@@ -121,7 +138,8 @@ const Community = () => {
                   Discussion Channels
                 </CardTitle>
                 <CardDescription>
-                  Specialized channels for different document types and use cases
+                  Specialized channels for different document types and use
+                  cases
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -131,7 +149,9 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">General Discussion</h4>
-                    <p className="text-sm text-muted-foreground">For all your Verolabz questions and conversations</p>
+                    <p className="text-sm text-muted-foreground">
+                      For all your Verolabz questions and conversations
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -140,7 +160,9 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">Feature Requests</h4>
-                    <p className="text-sm text-muted-foreground">Suggest new features and vote on upcoming ones</p>
+                    <p className="text-sm text-muted-foreground">
+                      Suggest new features and vote on upcoming ones
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -149,12 +171,14 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">Tips & Tricks</h4>
-                    <p className="text-sm text-muted-foreground">Share and discover efficient ways to use Verolabz</p>
+                    <p className="text-sm text-muted-foreground">
+                      Share and discover efficient ways to use Verolabz
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -172,7 +196,9 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">Community Events</h4>
-                    <p className="text-sm text-muted-foreground">Webinars, workshops, and Q&A sessions with experts</p>
+                    <p className="text-sm text-muted-foreground">
+                      Webinars, workshops, and Q&A sessions with experts
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -181,7 +207,9 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">Early Access</h4>
-                    <p className="text-sm text-muted-foreground">Try new features before they're publicly released</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try new features before they're publicly released
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -190,7 +218,9 @@ const Community = () => {
                   </div>
                   <div>
                     <h4 className="font-medium">Member Spotlights</h4>
-                    <p className="text-sm text-muted-foreground">Showcase your work and get featured in our community</p>
+                    <p className="text-sm text-muted-foreground">
+                      Showcase your work and get featured in our community
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -209,7 +239,8 @@ const Community = () => {
                 Community Guidelines
               </CardTitle>
               <CardDescription>
-                Help us maintain a welcoming and productive environment for everyone
+                Help us maintain a welcoming and productive environment for
+                everyone
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -229,21 +260,29 @@ const Community = () => {
       {/* CTA Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Join Our Community?</h2>
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to Join Our Community?
+          </h2>
           <p className="text-muted-foreground mb-8">
-            Connect with like-minded document creators and get the most out of Verolabz
+            Connect with like-minded document creators and get the most out of
+            Verolabz
           </p>
-          <Button 
-            onClick={handleJoinSlack}
-            size="lg" 
+
+          <Button
+            onClick={handleJoinWhatsApp}
+            size="lg"
             className="font-semibold group"
           >
-            <Slack className="w-5 h-5 mr-2" />
-            Join Our Slack Community Now
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Join Our WhatsApp Community Now
             <ExternalLink className="w-4 h-4 ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </Button>
+
           <p className="text-sm text-muted-foreground mt-4">
-            Already a member? <a href="#" className="text-primary hover:underline">Sign in to Slack</a>
+            Already a member?{" "}
+            <a href="#" className="text-primary hover:underline">
+              Sign in to Slack
+            </a>
           </p>
         </div>
       </section>
