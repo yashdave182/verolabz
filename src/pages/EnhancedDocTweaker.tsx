@@ -116,11 +116,12 @@ const EnhancedDocTweaker = () => {
   ): Promise<Blob> => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("user_prompt", prompt);
-    formData.append("model_choice", "gemini-2.0-flash");
+    formData.append("prompt", prompt);
+    formData.append("mode", "designer_auto_v2");
+    formData.append("output_format", "docx");
 
     const response = await fetch(
-      "https://omgy-verolabz.hf.space/process-document",
+      "https://omgy-vero-back-test.hf.space/enhance",
       {
         method: "POST",
         body: formData,
