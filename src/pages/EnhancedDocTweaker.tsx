@@ -33,6 +33,19 @@ import FeedbackDialog from "@/components/FeedbackDialog";
 // ⚙️ CONFIGURATION - Your HuggingFace backend URL
 const BACKEND_URL = "https://omgy-vero-back-test.hf.space";
 
+// Generic error messages (no technical details exposed)
+const ERROR_MESSAGES = {
+  processing_failed:
+    "We're having trouble processing your document. Please try again.",
+  file_invalid:
+    "We couldn't process this file. Please ensure it's a valid document.",
+  network_error:
+    "Network connection issue. Please check your internet and try again.",
+  server_error:
+    "Our service is temporarily unavailable. Please try again later.",
+  unknown: "Something went wrong. Please try again.",
+};
+
 type ProcessingStage =
   | "idle"
   | "uploading"
@@ -112,7 +125,7 @@ const EnhancedDocTweaker = () => {
     }
   };
 
-  // Call the Hugging Face API to enhance the .docx document
+  // Call the Hugging Face API to enhance the .docx document - Secure version
   const enhanceDocumentWithHuggingFace = async (
     file: File,
     userPrompt: string = "",
@@ -130,17 +143,28 @@ const EnhancedDocTweaker = () => {
 
     const url = `${BACKEND_URL}/enhance?${params.toString()}`;
 
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "Unknown error");
-      throw new Error(`API error: ${errText}`);
+      if (!response.ok) {
+        // Don't expose HTTP status or technical details
+        throw new Error("processing_failed");
+      }
+
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        throw new Error("processing_failed");
+      }
+
+      return blob;
+    } catch (err) {
+      // Catch all errors and convert to generic message
+      // Never expose stack traces or technical details
+      throw new Error("processing_failed");
     }
-
-    return await response.blob();
   };
 
   const handleProcess = async () => {
@@ -149,7 +173,7 @@ const EnhancedDocTweaker = () => {
     if (!file) {
       toast({
         title: "No Document",
-        description: "Please upload a .docx or .pdf document",
+        description: "Please upload a document to enhance",
         variant: "destructive",
       });
       return;
@@ -157,8 +181,8 @@ const EnhancedDocTweaker = () => {
 
     if (!context.trim()) {
       toast({
-        title: "No Context",
-        description: "Please describe what you want to achieve",
+        title: "Instructions Needed",
+        description: "Please describe how you'd like to enhance your document",
         variant: "destructive",
       });
       return;
@@ -167,9 +191,8 @@ const EnhancedDocTweaker = () => {
     const fileName = file.name.toLowerCase();
     if (!fileName.endsWith(".docx") && !fileName.endsWith(".pdf")) {
       toast({
-        title: "Unsupported Format",
-        description:
-          "Only .docx and .pdf files are supported for AI enhancement",
+        title: "File Format",
+        description: "Please upload a valid document file",
         variant: "destructive",
       });
       return;
@@ -256,9 +279,8 @@ const EnhancedDocTweaker = () => {
       setFeedbackOpen(true);
     } catch {
       toast({
-        title: "Download Failed",
-        description:
-          "Failed to download the enhanced document. Please try again.",
+        title: "Download Error",
+        description: "We couldn't download your file. Please try again.",
         variant: "destructive",
       });
     }
@@ -380,7 +402,7 @@ const EnhancedDocTweaker = () => {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".docx,.pdf"
+                      accept=".txt,.doc,.docx,.pdf"
                       onChange={handleFileUpload}
                       className="hidden"
                     />

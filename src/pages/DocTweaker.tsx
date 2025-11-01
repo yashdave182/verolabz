@@ -33,6 +33,15 @@ import FeedbackDialog from "@/components/FeedbackDialog";
 // ⚙️ CONFIGURATION - Your HuggingFace backend URL
 const BACKEND_URL = "https://omgy-vero-back-test.hf.space";
 
+// Generic error messages (no technical details exposed)
+const ERROR_MESSAGES = {
+  processing_failed: "We're having trouble processing your document. Please try again.",
+  file_invalid: "We couldn't process this file. Please ensure it's a valid document.",
+  network_error: "Network connection issue. Please check your internet and try again.",
+  server_error: "Our service is temporarily unavailable. Please try again later.",
+  unknown: "Something went wrong. Please try again.",
+};
+
 const DocTweaker = () => {
   // Text workflows
   const [documentText, setDocumentText] = useState("");
@@ -62,11 +71,11 @@ const DocTweaker = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // ✅ API call - Correct backend integration
+  // ✅ Secure API call - hides all technical errors
   const enhanceDocumentWithBackend = async (
     file: File,
     userPrompt: string = "",
-    docType: string = "auto",
+    docType: string = "auto"
   ): Promise<Blob> => {
     const formData = new FormData();
     formData.append("file", file);
@@ -80,23 +89,28 @@ const DocTweaker = () => {
 
     const url = `${BACKEND_URL}/enhance?${params.toString()}`;
 
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!response.ok) {
-      let errorMessage = "API error occurred";
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorMessage;
-      } catch {
-        errorMessage = await response.text();
+      if (!response.ok) {
+        // Don't expose HTTP status or technical details
+        throw new Error("processing_failed");
       }
-      throw new Error(errorMessage);
-    }
 
-    return await response.blob();
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        throw new Error("processing_failed");
+      }
+
+      return blob;
+    } catch (err) {
+      // Catch all errors and convert to generic message
+      // Never expose stack traces or technical details
+      throw new Error("processing_failed");
+    }
   };
 
   const handleTweak = async () => {
@@ -122,15 +136,15 @@ const DocTweaker = () => {
         let docType = "auto";
 
         if (fileName.endsWith(".pdf")) {
-          docType = "auto"; // Let Gemini auto-detect
+          docType = "auto";
         } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
-          docType = "auto"; // Let Gemini auto-detect
+          docType = "auto";
         }
 
         const enhancedBlob = await enhanceDocumentWithBackend(
           docxFile,
-          context.trim(), // User's custom instructions
-          docType,
+          context.trim(),
+          docType
         );
         setEnhancedDocxBlob(enhancedBlob);
 
@@ -140,12 +154,11 @@ const DocTweaker = () => {
             "Your document has been enhanced successfully. Preview it or download it.",
         });
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        );
+        // Show generic user-friendly message
+        setError(ERROR_MESSAGES.processing_failed);
         toast({
-          title: "Enhancement Failed",
-          description: err instanceof Error ? err.message : "Please try again",
+          title: "Processing Error",
+          description: ERROR_MESSAGES.processing_failed,
           variant: "destructive",
         });
       } finally {
@@ -171,7 +184,7 @@ const DocTweaker = () => {
       const enhancedBlob = await enhanceDocumentWithBackend(
         textBlob as any,
         context.trim(),
-        "auto",
+        "auto"
       );
 
       // For text files, the backend returns a .docx, so we save it
@@ -179,16 +192,14 @@ const DocTweaker = () => {
 
       toast({
         title: "Success!",
-        description:
-          "Your document has been enhanced and converted to DOCX format.",
+        description: "Your document has been enhanced and converted to DOCX format.",
       });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An unexpected error occurred",
-      );
+      // Show generic user-friendly message
+      setError(ERROR_MESSAGES.processing_failed);
       toast({
-        title: "Enhancement Failed",
-        description: err instanceof Error ? err.message : "Please try again",
+        title: "Processing Error",
+        description: ERROR_MESSAGES.processing_failed,
         variant: "destructive",
       });
     } finally {
@@ -197,7 +208,7 @@ const DocTweaker = () => {
   };
 
   const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -222,17 +233,15 @@ const DocTweaker = () => {
         const parseResult = await parseDocument(file);
 
         if (!parseResult.success || !parseResult.content) {
-          throw new Error(
-            parseResult.error || "Failed to extract text from document",
-          );
+          throw new Error("parse_failed");
         }
 
         setDocumentText(parseResult.content);
         setDocxFile(null);
       }
     } catch (e) {
-      console.error("File upload error:", e);
-      setError("Failed to process file. Please try again.");
+      // Show generic error message, don't expose details
+      setError(ERROR_MESSAGES.file_invalid);
       setUploadedFileName("");
       setDocumentText("");
       setDocxFile(null);
@@ -257,7 +266,7 @@ const DocTweaker = () => {
     if (!enhancedDocxBlob) {
       toast({
         title: "Error",
-        description: "No enhanced file available for download.",
+        description: "No enhanced file available. Please enhance a document first.",
         variant: "destructive",
       });
       return;
@@ -272,7 +281,7 @@ const DocTweaker = () => {
       const baseFileName =
         uploadedFileName?.replace(/\.[^/.]+$/, "") || "document";
       const originalExtension =
-        uploadedFileName?.split(".")?.pop()?.toLowerCase() || "docx";
+        uploadedFileName?.split(".").pop()?.toLowerCase() || "docx";
       const extension =
         originalExtension === "pdf" || originalExtension === "docx"
           ? originalExtension
@@ -293,11 +302,10 @@ const DocTweaker = () => {
       setFeedbackAction("download");
       setFeedbackOpen(true);
     } catch (error) {
-      console.error("Download error:", error);
+      // Show generic error message
       toast({
-        title: "Download Failed",
-        description:
-          "Failed to download the enhanced document. Please try again.",
+        title: "Download Error",
+        description: "We couldn't download your file. Please try again.",
         variant: "destructive",
       });
     }
