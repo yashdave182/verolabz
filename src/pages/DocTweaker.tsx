@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,9 @@ import { DocumentPreview } from "@/components/DocumentPreview";
 import { useAuth } from "@/lib/AuthContext";
 import FeedbackDialog from "@/components/FeedbackDialog";
 
+// ⚙️ CONFIGURATION - Your HuggingFace backend URL
+const BACKEND_URL = "https://omgy-vero-back-test.hf.space";
+
 const DocTweaker = () => {
   // Text workflows
   const [documentText, setDocumentText] = useState("");
@@ -59,28 +62,38 @@ const DocTweaker = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Calls the Hugging Face Space for .docx enhancement
-  const enhanceDocumentWithHuggingFace = async (
+  // ✅ API call - Correct backend integration
+  const enhanceDocumentWithBackend = async (
     file: File,
-    prompt: string,
+    userPrompt: string = "",
+    docType: string = "auto",
   ): Promise<Blob> => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("prompt", prompt);
-    formData.append("mode", "designer_auto_v2");
-    formData.append("output_format", "docx");
 
-    const response = await fetch(
-      "https://omgy-vero-back-test.hf.space/enhance",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+    // Build URL with query parameters
+    const params = new URLSearchParams();
+    params.append("doc_type", docType);
+    if (userPrompt.trim()) {
+      params.append("prompt", userPrompt.trim());
+    }
+
+    const url = `${BACKEND_URL}/enhance?${params.toString()}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
 
     if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`API error: ${err}`);
+      let errorMessage = "API error occurred";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        errorMessage = await response.text();
+      }
+      throw new Error(errorMessage);
     }
 
     return await response.blob();
@@ -96,60 +109,88 @@ const DocTweaker = () => {
     // Reset any previous preview state
     setShowPreview(false);
 
-    // If we have a .docx file, use the Hugging Face API
+    // If we have a .docx or .pdf file, use the backend API
     if (docxFile) {
-      if (!context.trim()) {
-        setError("Please provide enhancement instructions");
-        return;
-      }
-
       setIsProcessing(true);
       setError("");
       setTweakedDocument("");
       setEnhancedDocxBlob(null);
 
       try {
-        const enhancedBlob = await enhanceDocumentWithHuggingFace(
+        // Detect document type from file extension
+        const fileName = docxFile.name.toLowerCase();
+        let docType = "auto";
+
+        if (fileName.endsWith(".pdf")) {
+          docType = "auto"; // Let Gemini auto-detect
+        } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
+          docType = "auto"; // Let Gemini auto-detect
+        }
+
+        const enhancedBlob = await enhanceDocumentWithBackend(
           docxFile,
-          context.trim(),
+          context.trim(), // User's custom instructions
+          docType,
         );
         setEnhancedDocxBlob(enhancedBlob);
 
         toast({
           title: "Success!",
           description:
-            "Your .docx document has been enhanced successfully. Preview it or download it.",
+            "Your document has been enhanced successfully. Preview it or download it.",
         });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "An unexpected error occurred",
         );
+        toast({
+          title: "Enhancement Failed",
+          description: err instanceof Error ? err.message : "Please try again",
+          variant: "destructive",
+        });
       } finally {
         setIsProcessing(false);
       }
       return;
     }
 
-    // For text-based enhancement (non-.docx files). Placeholder behavior.
-    if (!documentText.trim() || !context.trim()) return;
+    // For text-based enhancement (non-.docx/.pdf files)
+    if (!documentText.trim()) {
+      setError("Please provide document text or upload a file");
+      return;
+    }
 
     setIsProcessing(true);
     setError("");
     setTweakedDocument("");
 
     try {
-      // Placeholder: return original text. Replace with client-side AI if needed.
-      setTweakedDocument(documentText.trim());
+      // Create a temporary .txt file and send to backend
+      const textBlob = new Blob([documentText], { type: "text/plain" });
+
+      const enhancedBlob = await enhanceDocumentWithBackend(
+        textBlob as any,
+        context.trim(),
+        "auto",
+      );
+
+      // For text files, the backend returns a .docx, so we save it
+      setEnhancedDocxBlob(enhancedBlob);
 
       toast({
-        title: "Notice",
+        title: "Success!",
         description:
-          "Text enhancement is not available in this version. Returning original text.",
+          "Your document has been enhanced and converted to DOCX format.",
       });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unexpected error occurred",
       );
+      toast({
+        title: "Enhancement Failed",
+        description: err instanceof Error ? err.message : "Please try again",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -170,12 +211,14 @@ const DocTweaker = () => {
     setTweakedDocument("");
 
     try {
-      // .docx files are sent directly to API, no parsing
-      if (file.name.toLowerCase().endsWith(".docx")) {
+      const fileExtension = file.name.toLowerCase();
+
+      // .docx and .pdf files are sent directly to API
+      if (fileExtension.endsWith(".docx") || fileExtension.endsWith(".pdf")) {
         setDocxFile(file);
         setDocumentText("");
       } else {
-        // Parse other formats client-side
+        // Parse other formats client-side (.txt, .doc)
         const parseResult = await parseDocument(file);
 
         if (!parseResult.success || !parseResult.content) {
@@ -224,7 +267,18 @@ const DocTweaker = () => {
       const url = URL.createObjectURL(enhancedDocxBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `enhanced_${uploadedFileName || "document"}.docx`;
+
+      // Preserve original file extension
+      const baseFileName =
+        uploadedFileName?.replace(/\.[^/.]+$/, "") || "document";
+      const originalExtension =
+        uploadedFileName?.split(".")?.pop()?.toLowerCase() || "docx";
+      const extension =
+        originalExtension === "pdf" || originalExtension === "docx"
+          ? originalExtension
+          : "docx";
+
+      a.download = `enhanced_${baseFileName}.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -263,8 +317,8 @@ const DocTweaker = () => {
             <span className="block text-primary">Perfected</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Upload any document and describe what you want to achieve. Our AI
-            will enhance it to perfection.
+            Upload any document and our AI will enhance it to perfection with
+            improved formatting and professional layout.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
@@ -279,28 +333,29 @@ const DocTweaker = () => {
               }}
             >
               <Wand2 className="w-5 h-5 mr-2" />
-              Start Tweaking
+              Start Enhancing
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Document Tweak Tool */}
+      {/* Document Enhancement Tool */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {/* Preview moved below the Enhance button */}
           <Card className="shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Document Enhancer</CardTitle>
               <CardDescription>
-                Upload your document and tell us your goal for personalized AI
-                enhancement
+                Upload your document for AI-powered enhancement with
+                professional formatting
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* File Upload Section */}
               <div className="space-y-4">
-                <Label className="text-base font-medium">Upload Document</Label>
+                <Label className="text-base font-medium">
+                  Upload Document (.txt, .doc, .docx, .pdf)
+                </Label>
 
                 {/* File Upload Button */}
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -319,7 +374,7 @@ const DocTweaker = () => {
                     ) : (
                       <>
                         <Upload className="w-4 h-4 mr-2" />
-                        Upload Document (.txt, .pdf, .doc, .docx)
+                        Upload Document
                       </>
                     )}
                   </Button>
@@ -327,7 +382,7 @@ const DocTweaker = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".txt,.pdf,.doc,.docx"
+                    accept=".txt,.doc,.docx,.pdf"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
@@ -352,15 +407,15 @@ const DocTweaker = () => {
                 </div>
               </div>
 
-              {/* Document text area - only show for non-.docx files */}
+              {/* Document text area - only show for text input */}
               {!docxFile && (
                 <div>
                   <Label htmlFor="document" className="text-base font-medium">
-                    Your Document
+                    Your Document (or paste text here)
                   </Label>
                   <Textarea
                     id="document"
-                    placeholder="Paste your document here..."
+                    placeholder="Paste your document text here..."
                     className="min-h-[200px] mt-2"
                     value={documentText}
                     onChange={(e) => setDocumentText(e.target.value)}
@@ -368,40 +423,41 @@ const DocTweaker = () => {
                 </div>
               )}
 
-              {/* Special note for .docx files */}
+              {/* Info for .docx and .pdf files */}
               {docxFile && (
                 <Alert>
                   <FileText className="h-4 w-4" />
                   <AlertDescription>
-                    You&apos;ve uploaded a .docx file. When you click
+                    You&apos;ve uploaded a document file. When you click
                     &quot;Enhance with AI&quot;, your document will be sent to
-                    our AI service for enhancement while preserving the original
-                    layout.
+                    our AI service for enhancement with improved formatting and
+                    professional layout.
                   </AlertDescription>
                 </Alert>
               )}
 
+              {/* User instructions field */}
               <div>
                 <Label htmlFor="context" className="text-base font-medium">
-                  What would you like to achieve?
+                  Enhancement Instructions (Optional)
                 </Label>
                 <Textarea
                   id="context"
-                  placeholder="e.g., 'Make this sound more professional for a job application' or 'Improve the flow and clarity of this essay'"
+                  placeholder="e.g., 'Make each practical more detailed' or 'Add more professional language' or 'Reorganize sections for better flow'"
                   className="min-h-[100px] mt-2"
                   value={context}
                   onChange={(e) => setContext(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tell the AI how you want to enhance your document. Leave blank
+                  for automatic enhancement.
+                </p>
               </div>
 
               <div className="flex gap-3">
                 <Button
                   onClick={handleTweak}
-                  disabled={
-                    (!documentText.trim() && !docxFile) ||
-                    !context.trim() ||
-                    isProcessing
-                  }
+                  disabled={(!documentText.trim() && !docxFile) || isProcessing}
                   className="flex-1"
                   size="lg"
                 >
@@ -434,7 +490,7 @@ const DocTweaker = () => {
                 )}
               </div>
 
-              {/* Inline Preview (below Enhance button) */}
+              {/* Inline Preview */}
               {showPreview && enhancedDocxBlob && (
                 <div className="pt-4">
                   <DocumentPreview
@@ -442,7 +498,6 @@ const DocTweaker = () => {
                     fileName={uploadedFileName || "enhanced_document.docx"}
                     onClose={() => {
                       setShowPreview(false);
-                      // Trigger feedback when closing preview
                       setFeedbackAction("preview");
                       setFeedbackOpen(true);
                     }}
@@ -458,7 +513,7 @@ const DocTweaker = () => {
                 </Alert>
               )}
 
-              {/* Results for enhanced .docx */}
+              {/* Results for enhanced document */}
               {enhancedDocxBlob && (
                 <div className="border-t pt-6 space-y-4">
                   <h3 className="text-base font-medium">Enhanced Document</h3>
@@ -470,11 +525,8 @@ const DocTweaker = () => {
                       onClick={() =>
                         setShowPreview((s) => {
                           const next = !s;
-
-                          // Only show feedback when closing preview
                           if (!next) {
                             setFeedbackAction("preview");
-
                             setFeedbackOpen(true);
                           }
                           return next;
@@ -498,58 +550,10 @@ const DocTweaker = () => {
 
                   <div className="p-4 bg-muted rounded-lg border border-primary/20">
                     <p className="text-sm text-foreground">
-                      Your .docx document has been successfully enhanced while
-                      preserving formatting. Use the Preview button for an HTML
-                      preview before downloading.
+                      Your document has been successfully enhanced with improved
+                      formatting and professional layout. Use the Preview button
+                      for an HTML preview before downloading.
                     </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Results for non-.docx text */}
-              {tweakedDocument && !docxFile && (
-                <div className="border-t pt-6">
-                  <Label className="text-base font-medium">
-                    AI Enhanced Document
-                  </Label>
-                  <div className="mt-2 p-4 bg-muted rounded-lg border border-primary/20">
-                    <pre className="whitespace-pre-wrap text-sm text-foreground">
-                      {tweakedDocument}
-                    </pre>
-                  </div>
-                  <div className="flex gap-3 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const blob = new Blob([tweakedDocument], {
-                          type: "text/plain",
-                        });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = "enhanced-document.txt";
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        // Prompt feedback after download for text case
-                        setFeedbackAction("download");
-                        setFeedbackOpen(true);
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(tweakedDocument);
-                      }}
-                    >
-                      Copy to Clipboard
-                    </Button>
                   </div>
                 </div>
               )}

@@ -30,6 +30,9 @@ import { DocumentPreview } from "@/components/DocumentPreview";
 import { useAuth } from "@/lib/AuthContext";
 import FeedbackDialog from "@/components/FeedbackDialog";
 
+// ⚙️ CONFIGURATION - Your HuggingFace backend URL
+const BACKEND_URL = "https://omgy-vero-back-test.hf.space";
+
 type ProcessingStage =
   | "idle"
   | "uploading"
@@ -112,21 +115,25 @@ const EnhancedDocTweaker = () => {
   // Call the Hugging Face API to enhance the .docx document
   const enhanceDocumentWithHuggingFace = async (
     file: File,
-    prompt: string,
+    userPrompt: string = "",
+    docType: string = "auto",
   ): Promise<Blob> => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("prompt", prompt);
-    formData.append("mode", "designer_auto_v2");
-    formData.append("output_format", "docx");
 
-    const response = await fetch(
-      "https://omgy-vero-back-test.hf.space/enhance",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+    // Build URL with query parameters
+    const params = new URLSearchParams();
+    params.append("doc_type", docType);
+    if (userPrompt.trim()) {
+      params.append("prompt", userPrompt.trim());
+    }
+
+    const url = `${BACKEND_URL}/enhance?${params.toString()}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "Unknown error");
@@ -142,7 +149,7 @@ const EnhancedDocTweaker = () => {
     if (!file) {
       toast({
         title: "No Document",
-        description: "Please upload a .docx document",
+        description: "Please upload a .docx or .pdf document",
         variant: "destructive",
       });
       return;
@@ -157,10 +164,12 @@ const EnhancedDocTweaker = () => {
       return;
     }
 
-    if (!file.name.toLowerCase().endsWith(".docx")) {
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith(".docx") && !fileName.endsWith(".pdf")) {
       toast({
         title: "Unsupported Format",
-        description: "Only .docx files are supported for AI enhancement",
+        description:
+          "Only .docx and .pdf files are supported for AI enhancement",
         variant: "destructive",
       });
       return;
@@ -185,6 +194,7 @@ const EnhancedDocTweaker = () => {
       const enhancedBlob = await enhanceDocumentWithHuggingFace(
         file,
         context.trim(),
+        "auto",
       );
       setEnhancedFileBlob(enhancedBlob);
       updateProgress("complete", "Complete!");
@@ -223,7 +233,16 @@ const EnhancedDocTweaker = () => {
       const url = URL.createObjectURL(enhancedFileBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `enhanced_${uploadedFileName || "document"}.docx`;
+      const baseFileName =
+        uploadedFileName?.replace(/\.[^/.]+$/, "") || "document";
+      const originalExtension =
+        uploadedFileName?.split(".")?.pop()?.toLowerCase() || "docx";
+      const extension =
+        originalExtension === "pdf" || originalExtension === "docx"
+          ? originalExtension
+          : "docx";
+
+      a.download = `enhanced_${baseFileName}.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -343,7 +362,7 @@ const EnhancedDocTweaker = () => {
                 {/* File Upload */}
                 <div className="space-y-4">
                   <Label className="text-base font-medium">
-                    Upload Document (.docx only)
+                    Upload Document (.docx or .pdf)
                   </Label>
 
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -355,13 +374,13 @@ const EnhancedDocTweaker = () => {
                       disabled={isProcessing}
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      Choose File (.docx)
+                      Choose File (.docx or .pdf)
                     </Button>
 
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".docx"
+                      accept=".docx,.pdf"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
@@ -499,7 +518,7 @@ const EnhancedDocTweaker = () => {
                       className="w-full"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Download Enhanced DOCX
+                      Download Enhanced Document
                     </Button>
                   </div>
 
