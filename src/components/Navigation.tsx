@@ -11,6 +11,7 @@ const Navigation = () => {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/doc-tweaker", label: "Document Enhancer" },
+    { href: "/sign-document", label: "Sign Document" },
     { href: "/community", label: "Community" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/contact", label: "Contact" },

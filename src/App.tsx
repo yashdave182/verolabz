@@ -8,6 +8,7 @@ import Footer from "./components/Footer";
 import Index from "./pages/Index";
 import DocTweaker from "./pages/DocTweaker";
 import EnhancedDocTweaker from "./pages/EnhancedDocTweaker";
+import SignDocument from "./pages/SignDocument";
 import Community from "./pages/Community";
 import HowItWorks from "./pages/HowItWorks";
 import Contact from "./pages/Contact";
@@ -47,6 +48,15 @@ const App = () => {
                       element={
                         <ProtectedRoute>
                           <EnhancedDocTweaker />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
+                      path="/sign-document"
+                      element={
+                        <ProtectedRoute>
+                          <SignDocument />
                         </ProtectedRoute>
                       }
                     />
