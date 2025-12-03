@@ -86,6 +86,17 @@ curl -X POST https://your-space.hf.space/enhance \
 **Response:**
 Enhanced document file (same format as input)
 
+### Add Signature
+```
+POST /add-signature
+```
+
+**Parameters:**
+- `file`: Document file (.docx)
+- `signature`: Base64 encoded image
+- `position`: bottom-right, bottom-center, or bottom-left
+- `signer_name`: Optional name
+
 ### API Info
 ```
 GET /

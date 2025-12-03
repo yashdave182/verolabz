@@ -115,6 +115,67 @@ def enhance_document():
             'details': str(e) if os.getenv('FLASK_ENV') == 'development' else None
         }), 500
 
+@app.route('/add-signature', methods=['POST'])
+def add_signature():
+    """
+    Add digital signature to document
+    
+    Expected form data:
+    - file: Document file (.docx)
+    - signature: Base64 signature image
+    - position: (optional) Position of signature
+    - signer_name: (optional) Name of signer
+    """
+    try:
+        # Validate file upload
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Empty filename'}), 400
+            
+        # Get signature data
+        signature_data = request.form.get('signature')
+        if not signature_data:
+            return jsonify({'error': 'No signature provided'}), 400
+            
+        position = request.form.get('position', 'bottom-right')
+        signer_name = request.form.get('signer_name')
+        
+        # Read file content
+        file_content = file.read()
+        
+        # Add signature
+        signed_doc = doc_converter.add_signature(
+            file_content=file_content,
+            signature_data=signature_data,
+            position=position,
+            signer_name=signer_name
+        )
+        
+        # Prepare response
+        output_buffer = BytesIO(signed_doc)
+        output_buffer.seek(0)
+        
+        base_name = os.path.splitext(file.filename)[0]
+        output_filename = f"Signed_{base_name}.docx"
+        
+        return send_file(
+            output_buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=output_filename
+        )
+        
+    except Exception as e:
+        print(f"Error signing document: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            'error': 'Failed to sign document',
+            'details': str(e) if os.getenv('FLASK_ENV') == 'development' else None
+        }), 500
+
 @app.route('/', methods=['GET'])
 def index():
     """Root endpoint with API information"""

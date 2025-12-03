@@ -1,10 +1,11 @@
+import io
+import re
+import base64
+from typing import Optional
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import PyPDF2
-import io
-import re
-from typing import Optional
 
 class DocumentConverter:
     """Converter for various document formats"""
@@ -221,3 +222,63 @@ class DocumentConverter:
                 new_doc.add_paragraph(line)
         
         return new_doc
+
+    def add_signature(self, file_content: bytes, signature_data: str, position: str = 'bottom-right', signer_name: str = None) -> bytes:
+        """
+        Add signature to document
+        
+        Args:
+            file_content: Original DOCX content
+            signature_data: Base64 encoded signature image
+            position: Position of signature (bottom-right, bottom-center, bottom-left)
+            signer_name: Optional name of signer
+            
+        Returns:
+            Signed document bytes
+        """
+        try:
+            doc = Document(io.BytesIO(file_content))
+            
+            # Decode signature image
+            if ',' in signature_data:
+                signature_data = signature_data.split(',')[1]
+            image_data = base64.b64decode(signature_data)
+            image_stream = io.BytesIO(image_data)
+            
+            # Add some spacing
+            doc.add_paragraph()
+            doc.add_paragraph()
+            
+            # Add signature paragraph
+            sig_para = doc.add_paragraph()
+            
+            # Set alignment based on position
+            if 'right' in position:
+                sig_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            elif 'center' in position:
+                sig_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            else:
+                sig_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                
+            # Add image
+            run = sig_para.add_run()
+            run.add_picture(image_stream, width=Inches(2.0))
+            
+            # Add signer name if provided
+            if signer_name:
+                name_para = doc.add_paragraph(signer_name)
+                if 'right' in position:
+                    name_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                elif 'center' in position:
+                    name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                else:
+                    name_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            
+            # Save
+            output_buffer = io.BytesIO()
+            doc.save(output_buffer)
+            output_buffer.seek(0)
+            return output_buffer.getvalue()
+            
+        except Exception as e:
+            raise ValueError(f"Failed to add signature: {str(e)}")

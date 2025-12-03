@@ -192,6 +192,18 @@ curl -X POST https://YOUR-SPACE.hf.space/enhance \
   -o enhanced.docx
 ```
 
+### POST /add-signature
+Add a digital signature to a DOCX file
+
+**Request:**
+- `file`: Document file (DOCX)
+- `signature`: Base64 signature image
+- `position`: Position (bottom-right, bottom-center, bottom-left)
+- `signer_name`: Optional name
+
+**Response:**
+Signed DOCX file
+
 ### GET /
 API information and features
 

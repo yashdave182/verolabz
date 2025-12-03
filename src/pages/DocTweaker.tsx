@@ -31,7 +31,7 @@ import { useAuth } from "@/lib/AuthContext";
 import FeedbackDialog from "@/components/FeedbackDialog";
 
 // ⚙️ CONFIGURATION - Your HuggingFace backend URL
-const BACKEND_URL = "https://omgy-vero-back-test2.hf.space";
+const BACKEND_URL = "https://omgy-vero-ps.hf.space";
 
 // Generic error messages (no technical details exposed)
 const ERROR_MESSAGES = {

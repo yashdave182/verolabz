@@ -33,7 +33,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Backend URL
-const BACKEND_URL = "https://omgy-vero-back-test2.hf.space";
+const BACKEND_URL = "https://omgy-vero-ps.hf.space";
 
 const ERROR_MESSAGES = {
   processing_failed: "We're having trouble processing your document. Please try again.",
