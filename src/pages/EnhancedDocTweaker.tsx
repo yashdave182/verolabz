@@ -30,8 +30,8 @@ import { DocumentPreview } from "@/components/DocumentPreview";
 import { useAuth } from "@/lib/AuthContext";
 import FeedbackDialog from "@/components/FeedbackDialog";
 
-// ⚙️ CONFIGURATION - Your HuggingFace backend URL
-const BACKEND_URL = "https://omgy-vero-back-test.hf.space";
+// ⚙️ CONFIGURATION - Your HuggingFace backend URL (LaTeX-enhanced)
+const BACKEND_URL = "https://omgy-vero-ps.hf.space";
 
 // Generic error messages (no technical details exposed)
 const ERROR_MESSAGES = {
@@ -447,7 +447,7 @@ const EnhancedDocTweaker = () => {
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     Your specific request will be the primary focus of the AI
-                    enhancement.
+                    enhancement. ✨ <strong>New:</strong> Supports LaTeX formatting for mathematical equations!
                   </p>
                 </div>
 
@@ -589,7 +589,7 @@ const EnhancedDocTweaker = () => {
                           2. AI Enhancement
                         </h4>
                         <p className="text-xs text-muted-foreground">
-                          Gemini improves your content
+                          Gemini improves your content with LaTeX support
                         </p>
                       </div>
                     </div>
